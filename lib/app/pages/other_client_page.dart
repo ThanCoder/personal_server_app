@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:person_server/app/components/core/index.dart';
 import 'package:person_server/app/components/server_file_online_list_item.dart';
 import 'package:person_server/app/constants.dart';
 import 'package:person_server/app/dialogs/host_form_dialog.dart';
@@ -126,7 +127,24 @@ class _OtherClientPageState extends State<OtherClientPage> {
                   itemBuilder: (context, index) {
                     return ServerFileOnlineListItem(
                       serverFile: list[index],
-                      onClicked: (serverFile) {},
+                      onClicked: (serverFile) {
+                        if (!serverFile.mime.startsWith('video')) {
+                          showDialogMessage(context, 'Viewer Not Suppored!');
+                          return;
+                        }
+                        final url =
+                            '${clientHostAddressNotifier.value}/stream?path=${serverFile.path}';
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VideoPlayerScreen(
+                              resoure: url,
+                              title: serverFile.name,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 )

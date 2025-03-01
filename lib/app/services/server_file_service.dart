@@ -4,7 +4,10 @@ import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:mime/mime.dart';
+import 'package:person_server/app/extensions/string_extension.dart';
 import 'package:person_server/app/models/index.dart';
+import 'package:person_server/app/utils/index.dart';
+import 'package:than_pkg/than_pkg.dart';
 
 class ServerFileService {
   //singleton pattern
@@ -12,13 +15,14 @@ class ServerFileService {
   ServerFileService._();
   factory ServerFileService() => instance;
 
-  // List<Map<String,dynamic>> toMapList()=> ;
-
   Future<List<ServerFileModel>> getList({
     required String dirPath,
     bool isShowHidden = true,
   }) async {
-    return await Isolate.run<List<ServerFileModel>>(() async {
+    final cachePath = getCachePath();
+
+    List<ServerFileModel> list =
+        await Isolate.run<List<ServerFileModel>>(() async {
       List<ServerFileModel> list = [];
       try {
         Directory dir = Directory(dirPath);
@@ -30,14 +34,20 @@ class ServerFileService {
           if (!isShowHidden && name.startsWith('.')) {
             continue;
           }
+          final mime = lookupMimeType(file.path) ?? '';
+          var fileCache = '$cachePath/${name.getName(withExt: false)}.png';
+          if (mime.startsWith('image')) {
+            fileCache = file.path;
+          }
           final serverFile = ServerFileModel(
-            name: name,
-            path: file.path,
-            mime: lookupMimeType(file.path) ?? '',
-            isFolder: file.statSync().type == FileSystemEntityType.directory,
-            size: file.statSync().size,
-            date: file.statSync().modified.millisecondsSinceEpoch,
-          );
+              name: name,
+              path: file.path,
+              mime: mime,
+              isFolder: file.statSync().type == FileSystemEntityType.directory,
+              size: file.statSync().size,
+              date: file.statSync().modified.millisecondsSinceEpoch,
+              coverPath: fileCache);
+          // print(serverFile.mime);
           list.add(serverFile);
         }
         //sort
@@ -57,5 +67,21 @@ class ServerFileService {
       }
       return list;
     });
+
+    final genVCoverList = list
+        .where((sf) => sf.mime.startsWith('video'))
+        .map((sf) => sf.path)
+        .toList();
+    final genPdfCoverList = list
+        .where((sf) => sf.mime.startsWith('application/pdf'))
+        .map((sf) => sf.path)
+        .toList();
+
+    await ThanPkg.platform
+        .genVideoCover(outDirPath: cachePath, videoPathList: genVCoverList);
+    await ThanPkg.platform
+        .genPdfCover(outDirPath: cachePath, pdfPathList: genPdfCoverList);
+
+    return list;
   }
 }

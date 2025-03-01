@@ -12,51 +12,61 @@ class ServerFileListItem extends StatelessWidget {
     required this.onClicked,
   });
 
-  String _getCoverPath() {
-    if (serverFile.mime.startsWith('image')) {
-      return serverFile.path;
-    }
+  Widget _getCoverImage() {
     if (serverFile.isFolder) {
-      return 'assets/folder1.png';
+      return MyImageFile(
+        path: '',
+        defaultAssetsPath: 'assets/folder1.png',
+        fit: BoxFit.fill,
+        borderRadius: 5,
+      );
+    } else {
+      return MyImageFile(
+        path: serverFile.coverPath,
+        defaultAssetsPath: 'assets/file.png',
+        fit: BoxFit.fill,
+        borderRadius: 5,
+      );
     }
-    return 'assets/file.png';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      spacing: 10,
-      children: [
-        SizedBox(
-          width: 150,
-          height: 160,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: MyImageFile(
-              path: _getCoverPath(),
-              fit: BoxFit.fill,
-              borderRadius: 5,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 5,
-            children: [
-              Text(
-                serverFile.name,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 2,
+    return GestureDetector(
+      onTap: () => onClicked(serverFile),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Row(
+          spacing: 10,
+          children: [
+            SizedBox(
+              width: 110,
+              height: 120,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: _getCoverImage(),
               ),
-              Text(serverFile.mime),
-              Text('Folder: ${serverFile.isFolder.toString()}'),
-              Text(getParseFileSize(serverFile.size.toDouble())),
-              Text(getParseDate(serverFile.date)),
-            ],
-          ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 5,
+                children: [
+                  Text(
+                    serverFile.name,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  Text(serverFile.mime),
+                  Text('Folder: ${serverFile.isFolder.toString()}'),
+                  Text(getParseFileSize(serverFile.size.toDouble())),
+                  Text(getParseDate(serverFile.date)),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

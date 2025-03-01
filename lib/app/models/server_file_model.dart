@@ -6,6 +6,7 @@ class ServerFileModel {
   bool isFolder;
   int size;
   int date;
+  String coverPath;
   ServerFileModel({
     required this.name,
     required this.path,
@@ -13,6 +14,7 @@ class ServerFileModel {
     required this.isFolder,
     required this.size,
     required this.date,
+    this.coverPath = '',
   });
 
   factory ServerFileModel.fromMap(Map<String, dynamic> map) {
@@ -23,6 +25,7 @@ class ServerFileModel {
       isFolder: map['is_folder'],
       size: map['size'],
       date: map['date'],
+      coverPath: map['cover_path'],
     );
   }
 
@@ -33,6 +36,7 @@ class ServerFileModel {
         'is_folder': isFolder,
         'size': size,
         'date': date,
+        'cover_path': coverPath,
       };
 }
 

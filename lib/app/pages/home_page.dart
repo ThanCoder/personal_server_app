@@ -21,9 +21,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<ServerFileModel> list = [];
   List<String> hostList = [];
-  bool isServerRunning = false;
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -47,44 +46,37 @@ class _HomePageState extends State<HomePage> {
   }
 
   void init() async {
+    if (isServerRunningNotifier.value) return;
+
     final recentPath = getRecentDB<String>('recent_dir_path') ?? '';
     if (recentPath.isEmpty) return;
+    isServerRunningNotifier.value = false;
+    setState(() {
+      isLoading = true;
+    });
     //start server
     await TServer.instance.stopServer(force: true);
     await TServer.instance.startServer(port: serverPort);
-    setState(() {
-      isServerRunning = true;
-    });
+    isServerRunningNotifier.value = true;
     _serverListener();
     //set
     serverHostAddressNotifier.value = 'http://localhost:$serverPort';
     serverSendFolderPathNotifier.value = recentPath;
 
-    final res = await ServerFileService.instance.getList(dirPath: recentPath);
+    serverSendListNotifier.value =
+        await ServerFileService.instance.getList(dirPath: recentPath);
     setState(() {
-      list = res;
+      isLoading = false;
     });
     TServer.instance.get('/', (req) async {
       tServerSend(
         req,
-        body: JsonEncoder.withIndent(' ').convert(list.toMapList()),
+        body: JsonEncoder.withIndent(' ')
+            .convert(serverSendListNotifier.value.toMapList()),
         contentType: ContentType.json,
       );
     });
   }
-
-  // void _showMenu() {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     builder: (context) => Column(
-  //       children: [
-  //         ListTile(
-  //           title: Text('Add Dir'),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   void _sendDirList() {
     final recentPath = getRecentDB<String>('recent_dir_path') ?? '';
@@ -98,23 +90,23 @@ class _HomePageState extends State<HomePage> {
         onSubmit: (path) async {
           await TServer.instance.stopServer(force: true);
           await TServer.instance.startServer(port: serverPort);
-          setState(() {
-            isServerRunning = true;
-          });
+          isServerRunningNotifier.value = true;
           _serverListener();
           //set
           serverHostAddressNotifier.value = 'http://localhost:$serverPort';
           serverSendFolderPathNotifier.value = path;
           //set recent
           setRecentDB<String>('recent_dir_path', path);
-          final res = await ServerFileService.instance.getList(dirPath: path);
+          serverSendListNotifier.value =
+              await ServerFileService.instance.getList(dirPath: path);
           setState(() {
-            list = res;
+            isLoading = false;
           });
           TServer.instance.get('/', (req) async {
             tServerSend(
               req,
-              body: JsonEncoder.withIndent(' ').convert(list.toMapList()),
+              body: JsonEncoder.withIndent(' ')
+                  .convert(serverSendListNotifier.value.toMapList()),
               contentType: ContentType.json,
             );
           });
@@ -131,17 +123,14 @@ class _HomePageState extends State<HomePage> {
     _sendDirList();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MyScaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            title: Text(appTitle),
-          ),
-          //show info
-          SliverToBoxAdapter(
-            child: Card(
+  Widget _getHeaderInfo() {
+    return ValueListenableBuilder(
+      valueListenable: isServerRunningNotifier,
+      builder: (context, isServerRunning, child) {
+        return Column(
+          children: [
+            //info
+            Card(
               child: Row(
                 spacing: 10,
                 children: [
@@ -190,14 +179,8 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-          ),
-          //spacer
-          SliverToBoxAdapter(
-            child: SizedBox(height: 20),
-          ),
-          //wifi list
-          SliverToBoxAdapter(
-            child: isServerRunning
+            //wifi list
+            isServerRunning
                 ? Center(
                     child: Column(
                       spacing: 5,
@@ -210,43 +193,83 @@ class _HomePageState extends State<HomePage> {
                     ),
                   )
                 : SizedBox(),
-          ),
+          ],
+        );
+      },
+    );
+  }
 
-          SliverToBoxAdapter(
-            child: SizedBox(height: 20),
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: serverSendListNotifier,
+      builder: (context, list, child) {
+        return MyScaffold(
+          contentPadding: 0,
+          body: isLoading
+              ? TLoader()
+              : CustomScrollView(
+                  slivers: [
+                    SliverAppBar(
+                      title: Text(appTitle),
+                      floating: false,
+                      pinned: true,
+                    ),
 
-          //list
-          SliverList.separated(
-            separatorBuilder: (context, index) => const Divider(),
-            itemCount: list.length,
-            itemBuilder: (context, index) {
-              return ServerFileListItem(
-                serverFile: list[index],
-                onClicked: (serverFile) {},
-              );
-            },
-          )
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _checkStoragePermisssion,
-        child: Icon(Icons.add),
-      ),
+                    SliverToBoxAdapter(
+                      child: _getHeaderInfo(),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: 20),
+                    ),
+
+                    //list
+                    SliverList.separated(
+                      separatorBuilder: (context, index) => const Divider(),
+                      itemCount: list.length,
+                      itemBuilder: (context, index) {
+                        return ServerFileListItem(
+                          serverFile: list[index],
+                          onClicked: (serverFile) {
+                            if (!serverFile.mime.startsWith('video')) {
+                              showDialogMessage(
+                                  context, 'Viewer Not Suppored!');
+                              return;
+                            }
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VideoPlayerScreen(
+                                  resoure: serverFile.path,
+                                  title: serverFile.name,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    )
+                  ],
+                ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _checkStoragePermisssion,
+            child: Icon(Icons.add),
+          ),
+        );
+      },
     );
   }
 
   void _toggleStartServer() async {
-    if (isServerRunning) {
+    if (isServerRunningNotifier.value) {
       await TServer.instance.stopServer(force: true);
     } else {
       //start server
       await TServer.instance.stopServer(force: true);
       await TServer.instance.startServer(port: serverPort);
     }
-    setState(() {
-      isServerRunning = !isServerRunning;
-    });
+    isServerRunningNotifier.value = !isServerRunningNotifier.value;
   }
 
   void _serverListener() {

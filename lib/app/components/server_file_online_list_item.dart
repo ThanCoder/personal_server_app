@@ -3,7 +3,6 @@ import 'package:person_server/app/components/index.dart';
 import 'package:person_server/app/models/index.dart';
 import 'package:person_server/app/notifiers/server_notifier.dart';
 import 'package:person_server/app/utils/index.dart';
-import 'package:person_server/app/widgets/core/my_image_file.dart';
 import 'package:person_server/app/widgets/index.dart';
 
 class ServerFileOnlineListItem extends StatelessWidget {
@@ -21,25 +20,27 @@ class ServerFileOnlineListItem extends StatelessWidget {
   }
 
   Widget _getCoverImage() {
-    if (serverFile.mime.startsWith('image')) {
+    if (serverFile.isFolder) {
+      return MyImageFile(
+        defaultAssetsPath: 'assets/folder1.png',
+        path: '',
+        fit: BoxFit.fill,
+        borderRadius: 5,
+      );
+    } else {
       final host = clientHostAddressNotifier.value;
       if (host.isNotEmpty) {
-        final url = '$host/download?path=${serverFile.path}';
+        final url = '$host/download?path=${serverFile.coverPath}';
         return MyImageUrl(
+          defaultAssetsPath: 'assets/file.png',
           url: url,
           fit: BoxFit.fill,
           borderRadius: 5,
         );
       }
-    } else if (serverFile.isFolder) {
-      return MyImageFile(
-        path: 'assets/folder1.png',
-        fit: BoxFit.fill,
-        borderRadius: 5,
-      );
     }
     return MyImageFile(
-      path: '',
+      path: 'assets/file.png',
       fit: BoxFit.fill,
       borderRadius: 5,
     );
