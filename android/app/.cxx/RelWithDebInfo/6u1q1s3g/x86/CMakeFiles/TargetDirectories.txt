@@ -1,0 +1,2 @@
+/home/thancoder/projects/flutter_projects/personal_server/android/app/.cxx/RelWithDebInfo/6u1q1s3g/x86/CMakeFiles/edit_cache.dir
+/home/thancoder/projects/flutter_projects/personal_server/android/app/.cxx/RelWithDebInfo/6u1q1s3g/x86/CMakeFiles/rebuild_cache.dir

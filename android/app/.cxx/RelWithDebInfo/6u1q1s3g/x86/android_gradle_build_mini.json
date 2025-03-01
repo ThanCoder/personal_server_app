@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/home/thancoder/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/usr/bin/ninja",
+      "-C",
+      "/home/thancoder/projects/flutter_projects/personal_server/android/app/.cxx/RelWithDebInfo/6u1q1s3g/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/usr/bin/ninja",
+    "-C",
+    "/home/thancoder/projects/flutter_projects/personal_server/android/app/.cxx/RelWithDebInfo/6u1q1s3g/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}
