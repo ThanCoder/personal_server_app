@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 //debug
 const isDebugPrint = false;
 
+const appBrowserProxyHostUrl = 'https://node-browser.vercel.app';
+const appForwardProxyHostUrl = 'https://express-forward-proxy.vercel.app';
+
 //assets
 const defaultIconAssetsPath = 'assets/logo.webp';
 //version name
@@ -20,4 +23,4 @@ const dangerColor = Colors.red;
 final disableColor = Colors.grey[200];
 
 //server
-const serverPort = 9900;
+const serverPort = 9000;

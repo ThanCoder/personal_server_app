@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../extensions/double_extension.dart';
 
 import '../../dialogs/core/index.dart';
 import '../../services/core/index.dart';
-import '../../utils/index.dart';
 import '../../widgets/index.dart';
 import '../index.dart';
 
@@ -16,7 +16,7 @@ class CacheComponent extends StatefulWidget {
 class _CacheComponentState extends State<CacheComponent> {
   @override
   Widget build(BuildContext context) {
-    if (getCacheCount() == 0) {
+    if (CacheServices.getCacheCount() == 0) {
       return SizedBox.shrink();
     }
     return ListTileWithDesc(
@@ -28,10 +28,9 @@ class _CacheComponentState extends State<CacheComponent> {
             submitText: 'Clean',
             onCancel: () {},
             onSubmit: () async {
-              await cleanCache();
+              showMessage(context, 'Cache Cleanning...');
+              await CacheServices.cleanCache();
               setState(() {});
-              if (!mounted) return;
-              showMessage(context, 'Cache Cleaned');
             },
           ),
         );
@@ -39,7 +38,7 @@ class _CacheComponentState extends State<CacheComponent> {
       leading: const Icon(Icons.delete_forever),
       title: 'Clean Cache',
       desc:
-          'Cache - Count:${getCacheCount()} - Size:${getParseFileSize(getCacheSize().toDouble())} ',
+          'Cache - Count:${CacheServices.getCacheCount()} - Size:${CacheServices.getCacheSize().toDouble().toFileSizeLabel()} ',
     );
   }
 }

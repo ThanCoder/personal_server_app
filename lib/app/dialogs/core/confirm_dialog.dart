@@ -5,7 +5,7 @@ class ConfirmDialog extends StatelessWidget {
   String contentText;
   String cancelText;
   String submitText;
-  void Function() onCancel;
+  void Function()? onCancel;
   void Function() onSubmit;
   ConfirmDialog({
     super.key,
@@ -13,7 +13,7 @@ class ConfirmDialog extends StatelessWidget {
     this.contentText = '',
     this.cancelText = 'Cancel',
     this.submitText = 'Submit',
-    required this.onCancel,
+    this.onCancel,
     required this.onSubmit,
   });
 
@@ -25,14 +25,16 @@ class ConfirmDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop(true);
-            onCancel();
+            Navigator.pop(context);
+            if (onCancel != null) {
+              onCancel!();
+            }
           },
           child: Text(cancelText),
         ),
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop(true);
+            Navigator.pop(context);
             onSubmit();
           },
           child: Text(submitText),

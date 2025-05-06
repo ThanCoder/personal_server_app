@@ -17,18 +17,24 @@ dependencies:
     sdk: flutter
   flutter_spinkit: ^5.2.1
   intl: ^0.20.2
-  than_pkg: ^1.5.4
-  t_server: ^1.0.1
-  url_launcher: ^6.3.1
-  uuid: ^4.5.1
-  mime: ^2.0.0
   media_kit: ^1.1.11
   media_kit_libs_video: ^1.0.5
   media_kit_video: ^1.2.5
+  mime: ^2.0.0
+  t_server: ^1.0.4
+  than_pkg: ^1.6.7
+  url_launcher: ^6.3.1
+  uuid: ^4.5.1
+  web_socket_channel: ^3.0.3
+  file_selector: ^1.0.3
+  real_path_file_selector: ^0.0.6
+  html: ^0.15.5+1
+  flutter_markdown: ^0.7.6+2
+  timeago: ^3.2.2
 
 dev_dependencies:
-  flutter_launcher_icons: ^0.14.3
   change_app_package_name: ^1.5.0
+  flutter_launcher_icons: ^0.14.3
   # dart run change_app_package_name:main [com.new.package.name]
   flutter_lints: ^5.0.0
   flutter_test:

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ListTileWithDesc extends StatelessWidget {
   String title;
-  String? desc;
+  String desc;
   Widget? trailing;
   Widget? leading;
   double spacing;
@@ -11,7 +11,7 @@ class ListTileWithDesc extends StatelessWidget {
     super.key,
     required this.title,
     this.trailing,
-    this.desc,
+    this.desc = '',
     this.leading,
     this.spacing = 10,
     this.onClick,
@@ -19,14 +19,14 @@ class ListTileWithDesc extends StatelessWidget {
 
   Widget _getLeading() {
     if (leading == null) {
-      return Container();
+      return SizedBox.shrink();
     }
     return leading!;
   }
 
   Widget _getTrailing() {
     if (trailing == null) {
-      return Container();
+      return SizedBox.shrink();
     }
     return trailing!;
   }
@@ -57,17 +57,21 @@ class ListTileWithDesc extends StatelessWidget {
                         title,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      desc != null ? const SizedBox(height: 5) : Container(),
-                      desc != null
-                          ? Text(
-                              desc ?? '',
+                      desc.isEmpty
+                          ? const SizedBox(height: 5)
+                          : SizedBox.shrink(),
+                      desc.isEmpty
+                          ? SizedBox.shrink()
+                          : Text(
+                              desc,
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w100,
                               ),
                               overflow: TextOverflow.ellipsis,
-                            )
-                          : Container(),
+                              maxLines: 3,
+                            ),
                     ],
                   ),
                 ),

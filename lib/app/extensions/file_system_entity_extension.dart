@@ -2,11 +2,15 @@ import 'dart:io';
 
 extension FileSystemEntityExtension on FileSystemEntity {
   String getName({bool withExt = true}) {
-    final name = path.split('/').last;
+    var name = path.split('/').last;
     if (withExt) {
       return name;
     }
-    return name.split('.').first;
+    //replace . ပါလာရင်
+    String ext = name.split('.').last;
+    final noExt = name.replaceAll('.$ext', '');
+    // name = '${noExt.replaceAll('.', ' ')}.$ext';
+    return noExt;
   }
 
   String getExt() {

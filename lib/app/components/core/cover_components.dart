@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
 import '../../dialogs/core/index.dart';
@@ -19,6 +19,13 @@ class CoverComponents extends StatefulWidget {
 
 class _CoverComponentsState extends State<CoverComponents> {
   bool isLoading = false;
+  late String imagePath;
+
+  @override
+  void initState() {
+    imagePath = widget.coverPath;
+    super.initState();
+  }
 
   void _downloadUrl() {
     showDialog(
@@ -26,7 +33,7 @@ class _CoverComponentsState extends State<CoverComponents> {
       builder: (context) => RenameDialog(
         renameLabelText: Text('Download From Url'),
         submitText: 'Download',
-        renameText: '',
+        text: '',
         onCancel: () {},
         onSubmit: (url) async {
           try {
@@ -34,23 +41,20 @@ class _CoverComponentsState extends State<CoverComponents> {
               isLoading = true;
             });
             await Dio().download(url, widget.coverPath);
-
+            if (!mounted) return;
             setState(() {
               isLoading = false;
             });
           } catch (e) {
+            if (!mounted) return;
             setState(() {
               isLoading = false;
             });
-            _showMsg(e.toString());
+            showDialogMessage(context, e.toString());
           }
         },
       ),
     );
-  }
-
-  void _showMsg(String msg) {
-    showDialogMessage(context, msg);
   }
 
   void _addFromPath() async {
@@ -58,16 +62,25 @@ class _CoverComponentsState extends State<CoverComponents> {
       setState(() {
         isLoading = true;
       });
-      final res = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Fick Cover',
-        type: FileType.image,
+      final files = await openFiles(
+        acceptedTypeGroups: [
+          XTypeGroup(mimeTypes: [
+            'image/png',
+            'image/jpg',
+            'image/webp',
+            'image/jpeg'
+          ]),
+        ],
       );
-      if (res != null && res.files.isNotEmpty) {
-        final path = res.files.first.path!;
+      if (files.isNotEmpty) {
+        final path = files.first.path;
         final file = File(path);
-        await file.copy(widget.coverPath);
-        //clear image cache
-        clearAndRefreshImage();
+        if (widget.coverPath.isNotEmpty) {
+          await file.copy(widget.coverPath);
+          // clear image cache
+          await clearAndRefreshImage();
+        }
+        imagePath = path;
       }
       setState(() {
         isLoading = false;
@@ -83,25 +96,30 @@ class _CoverComponentsState extends State<CoverComponents> {
   void _showMenu() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => ListView(
-        children: [
-          ListTile(
-            onTap: () {
-              Navigator.pop(context);
-              _addFromPath();
-            },
-            leading: const Icon(Icons.add),
-            title: const Text('Add From Path'),
+      builder: (context) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: 150),
+          child: Column(
+            children: [
+              ListTile(
+                onTap: () {
+                  Navigator.pop(context);
+                  _addFromPath();
+                },
+                leading: const Icon(Icons.add),
+                title: const Text('Add From Path'),
+              ),
+              ListTile(
+                onTap: () {
+                  Navigator.pop(context);
+                  _downloadUrl();
+                },
+                leading: const Icon(Icons.add),
+                title: const Text('Add From Url'),
+              ),
+            ],
           ),
-          ListTile(
-            onTap: () {
-              Navigator.pop(context);
-              _downloadUrl();
-            },
-            leading: const Icon(Icons.add),
-            title: const Text('Add From Url'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -118,7 +136,8 @@ class _CoverComponentsState extends State<CoverComponents> {
           child: isLoading
               ? TLoader()
               : MyImageFile(
-                  path: widget.coverPath,
+                  path: imagePath,
+                  borderRadius: 5,
                 ),
         ),
       ),

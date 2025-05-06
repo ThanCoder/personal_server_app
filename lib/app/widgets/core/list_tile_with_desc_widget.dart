@@ -25,7 +25,7 @@ class ListTileWithDescWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   widget1,
-                  desc != null ? const SizedBox(height: 5) : Container(),
+                  desc != null ? const SizedBox(height: 5) : SizedBox.shrink(),
                   desc != null
                       ? Text(
                           desc ?? '',
@@ -34,7 +34,7 @@ class ListTileWithDescWidget extends StatelessWidget {
                             fontStyle: FontStyle.italic,
                           ),
                         )
-                      : Container(),
+                      : SizedBox.shrink(),
                 ],
               ),
             ),

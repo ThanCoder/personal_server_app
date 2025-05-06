@@ -5,11 +5,15 @@ extension StringExtension on String {
   }
 
   String getName({bool withExt = true}) {
-    final name = split('/').last;
+    var name = split('/').last;
     if (withExt) {
       return name;
     }
-    return name.split('.').first;
+    //replace . ပါလာရင်
+    String ext = name.split('.').last;
+    final noExt = name.replaceAll('.$ext', '');
+    // name = '${name.replaceAll('.', ' ')}.$ext';
+    return noExt;
   }
 
   String getExt() {
