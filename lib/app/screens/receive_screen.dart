@@ -55,6 +55,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
   void _download(ShareFile share, String savePath) {
     showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (context) => DownloadDialog(
         url: '${widget.url}/download?path=${share.path}',
@@ -94,6 +95,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         list.map((e) => '${widget.url}/download?path=${e.path}').toList();
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => DownloadMultipleDialog(
         downloadUrlList: downloadUrlList,
         onClosed: (errorMsg) {

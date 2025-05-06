@@ -95,7 +95,7 @@ class _DownloadMultipleDialogState extends State<DownloadMultipleDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
-            Text('$downloadLength/$downloadIndex'),
+            Text('$downloadIndex/$downloadLength'),
             Text(progressMsg),
             LinearProgressIndicator(
               value: fileSize == 0 ? null : downloadedSize / fileSize,
