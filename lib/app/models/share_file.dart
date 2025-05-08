@@ -30,4 +30,8 @@ class ShareFile {
         'size': size,
         'date': date,
       };
+  @override
+  String toString() {
+    return name;
+  }
 }

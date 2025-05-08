@@ -39,7 +39,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       setState(() {
         isLoading = true;
       });
-      final res = await DioServices.instance.getDio.get(widget.url);
+      final res = await DioServices.instance.getDio.get('${widget.url}/api');
       List<dynamic> resList = res.data;
       list = resList.map((map) => ShareFile.fromMap(map)).toList();
 

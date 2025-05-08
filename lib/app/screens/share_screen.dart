@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:person_server/app/constants.dart';
 import 'package:person_server/app/dialogs/index.dart';
@@ -10,6 +10,7 @@ import 'package:person_server/app/lib_components/path_chooser.dart';
 import 'package:person_server/app/models/share_file.dart';
 import 'package:person_server/app/services/share_services.dart';
 import 'package:person_server/app/widgets/index.dart';
+import 'package:real_path_file_selector/ui/extensions/file_system_entity_extension.dart';
 import 'package:t_server/t_server.dart';
 import 'package:than_pkg/than_pkg.dart';
 
@@ -90,29 +91,13 @@ class _ShareScreenState extends State<ShareScreen> {
         isLoading = true;
         isServerRunning = false;
       });
-
       await _startServer();
 
+      // await Future.delayed(const Duration(seconds: 1));
+
       list = ShareServices.getList(pathList);
-      final mapList = list.map((e) => e.toMap).toList();
-      final json = JsonEncoder.withIndent(' ').convert(mapList);
-      // send client
-      TServer.instance.get('/', (req) {
-        // TServer.send(req, body: 'hello');
-        TServer.sendJson(req, body: json);
-      });
-      TServer.instance.get('/download', (req) {
-        final path = req.uri.queryParameters['path'] ?? '';
-        TServer.sendFile(req, path);
-      });
-      TServer.instance.get('/image', (req) {
-        final path = req.uri.queryParameters['path'] ?? '';
-        TServer.sendImage(req, path);
-      });
-      TServer.instance.get('/stream', (req) {
-        final path = req.uri.queryParameters['path'] ?? '';
-        TServer.sendStreamVideo(req, path);
-      });
+
+      await ShareServices.share(list);
 
       if (!mounted) return;
       setState(() {
@@ -163,71 +148,99 @@ class _ShareScreenState extends State<ShareScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MyScaffold(
-      body: isLoading
-          ? TLoader()
-          : CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  title: Text('Share'),
-                ),
-                //server status
-                SliverToBoxAdapter(
-                  child: Column(
-                    spacing: 5,
-                    children: [
-                      Text(
-                        isServerRunning
-                            ? 'Running On: $serverStatusText'
-                            : 'Sever Stop',
-                        style: TextStyle(
-                          color: isServerRunning ? Colors.green : Colors.red,
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('ပြန်စတင်မယ်'),
-                          IconButton(
-                            onPressed: _share,
-                            icon: Icon(Icons.refresh_rounded),
-                          ),
-                        ],
-                      ),
-                    ],
+    return DropTarget(
+      onDragDone: (details) {
+        final res = details.files
+            .map(
+              (e) => e.path,
+            )
+            .where((path) => File(path).isFile())
+            .toList();
+        pathList.addAll(res);
+        _share();
+      },
+      child: MyScaffold(
+        body: isLoading
+            ? TLoader()
+            : CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    title: Text('Share'),
                   ),
-                ),
-
-                SliverToBoxAdapter(child: Divider()),
-
-                // list
-                SliverList.builder(
-                  itemCount: list.length,
-                  itemBuilder: (context, index) {
-                    final share = list[index];
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          spacing: 5,
+                  //server status
+                  SliverToBoxAdapter(
+                    child: Column(
+                      spacing: 5,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            ThanPkg.platform.launch(serverStatusText);
+                          },
+                          child: Text(
+                            isServerRunning
+                                ? 'Running On: $serverStatusText'
+                                : 'Sever Stop',
+                            style: TextStyle(
+                              color:
+                                  isServerRunning ? Colors.green : Colors.red,
+                            ),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(share.name),
-                            Text(share.size.toDouble().toFileSizeLabel()),
-                            Text(share.mime),
-                            Text(DateTime.fromMillisecondsSinceEpoch(share.date)
-                                .toParseTime()),
+                            Text('ပြန်စတင်မယ်'),
+                            IconButton(
+                              onPressed: _share,
+                              icon: Icon(Icons.refresh_rounded),
+                            ),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showMenu,
-        child: Icon(Icons.add),
+                      ],
+                    ),
+                  ),
+
+                  SliverToBoxAdapter(child: Divider()),
+
+                  // list
+                  SliverList.builder(
+                    itemCount: list.length,
+                    itemBuilder: (context, index) {
+                      final share = list[index];
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 5,
+                            children: [
+                              Text(share.name),
+                              Text(share.size.toDouble().toFileSizeLabel()),
+                              Text(share.mime),
+                              Text(
+                                DateTime.fromMillisecondsSinceEpoch(share.date)
+                                    .toParseTime(),
+                              ),
+                              IconButton(
+                                color: Colors.red,
+                                onPressed: () {
+                                  pathList.removeAt(index);
+                                  _share();
+                                },
+                                icon: Icon(Icons.delete_forever),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _showMenu,
+          child: Icon(Icons.add),
+        ),
       ),
     );
   }
