@@ -52,7 +52,8 @@ class _ShareScreenState extends State<ShareScreen> {
   }
 
   void _addFiles() async {
-    pathList = await platformFilePathChooser(context);
+    final res = await platformFilePathChooser(context);
+    pathList.addAll(res);
     _share();
   }
 
@@ -64,11 +65,13 @@ class _ShareScreenState extends State<ShareScreen> {
         onSubmit: (text) {
           final dir = Directory(text);
           if (!dir.existsSync()) return;
-          pathList = dir
+          final res = dir
               .listSync()
               .where((e) => e.statSync().type == FileSystemEntityType.file)
               .map((e) => e.path)
               .toList();
+          pathList.addAll(res);
+          _share();
           _share();
         },
       ),
@@ -189,6 +192,22 @@ class _ShareScreenState extends State<ShareScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            list.isEmpty ? SizedBox.shrink() : Text('ရှင်းမယ်'),
+                            list.isEmpty
+                                ? SizedBox.shrink()
+                                : IconButton(
+                                    onPressed: () async {
+                                      pathList.clear();
+                                      list.clear();
+                                      await TServer.instance
+                                          .stopServer(force: true);
+                                      setState(() {
+                                        isServerRunning = false;
+                                      });
+                                    },
+                                    icon: Icon(Icons.clear_all_rounded),
+                                  ),
+                            const SizedBox(width: 40),
                             Text('ပြန်စတင်မယ်'),
                             IconButton(
                               onPressed: _share,
