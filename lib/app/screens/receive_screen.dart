@@ -63,6 +63,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
         message: '`${share.name}` Downloading...',
         onError: (msg) {
           showDialogMessage(context, msg);
+          setState(() {});
         },
         onSuccess: () {
           setState(() {});
@@ -99,6 +100,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       builder: (context) => DownloadMultipleDialog(
         downloadUrlList: downloadUrlList,
         onClosed: (errorMsg) {
+          setState(() {});
           if (errorMsg.isNotEmpty) {
             showDialogMessage(context, errorMsg);
             return;

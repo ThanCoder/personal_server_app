@@ -57,6 +57,18 @@ class _ShareScreenState extends State<ShareScreen> {
     _share();
   }
 
+  void _addVideos() async {
+    final res = await platformVideoPathChooser(context);
+    pathList.addAll(res);
+    _share();
+  }
+
+  void _addImages() async {
+    final res = await platformImagePathChooser();
+    pathList.addAll(res);
+    _share();
+  }
+
   void _addFolderPath() async {
     showDialog(
       context: context,
@@ -90,6 +102,12 @@ class _ShareScreenState extends State<ShareScreen> {
         _showMenu();
         return;
       }
+      list = ShareServices.getList(pathList);
+
+      if (isServerRunning) {
+        setState(() {});
+        return;
+      }
       setState(() {
         isLoading = true;
         isServerRunning = false;
@@ -97,8 +115,6 @@ class _ShareScreenState extends State<ShareScreen> {
       await _startServer();
 
       // await Future.delayed(const Duration(seconds: 1));
-
-      list = ShareServices.getList(pathList);
 
       await ShareServices.share(list);
 
@@ -132,6 +148,22 @@ class _ShareScreenState extends State<ShareScreen> {
                 onTap: () {
                   Navigator.pop(context);
                   _addFiles();
+                },
+              ),
+              ListTile(
+                title: Text('Add Videos'),
+                leading: Icon(Icons.add),
+                onTap: () {
+                  Navigator.pop(context);
+                  _addVideos();
+                },
+              ),
+              ListTile(
+                title: Text('Add Images'),
+                leading: Icon(Icons.add),
+                onTap: () {
+                  Navigator.pop(context);
+                  _addImages();
                 },
               ),
               ListTile(
