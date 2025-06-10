@@ -7,7 +7,7 @@ import 'app/services/index.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await ThanPkg.windowManagerensureInitialized();
+  await ThanPkg.instance.init();
 
   //media player
   MediaKit.ensureInitialized();

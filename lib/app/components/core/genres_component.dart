@@ -43,10 +43,8 @@ class _GenresComponentState extends State<GenresComponent> {
       builder: (context) => GenresFormDialog(
         genresList: [],
         onAddGenres: (GenresModel genres) {
-          print(genres);
         },
         onDeleteGenres: (GenresModel genres) {
-          print(genres);
         },
         existsList: genresList,
         onCancel: () {},

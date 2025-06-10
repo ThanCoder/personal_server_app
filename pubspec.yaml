@@ -22,12 +22,12 @@ dependencies:
   media_kit_video: ^1.2.5
   mime: ^2.0.0
   t_server: ^1.0.4
-  than_pkg: ^1.6.7
+  than_pkg: ^2.3.0
   url_launcher: ^6.3.1
   uuid: ^4.5.1
   web_socket_channel: ^3.0.3
   file_selector: ^1.0.3
-  real_path_file_selector: ^0.0.6
+  real_path_file_selector: ^0.1.0
   html: ^0.15.5+1
   flutter_markdown: ^0.7.6+2
   timeago: ^3.2.2
@@ -42,7 +42,7 @@ dev_dependencies:
     sdk: flutter
 
 flutter_launcher_icons:
-  # commmand flutter pub get dart run flutter_launcher_icons
+  # commmand dart run flutter_launcher_icons
   android: "launcher_icon"
   image_path: "assets/logo.webp"
 

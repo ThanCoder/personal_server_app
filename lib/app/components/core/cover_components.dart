@@ -46,7 +46,7 @@ class _CoverComponentsState extends State<CoverComponents> {
               isLoading = false;
             });
           } catch (e) {
-            if (!mounted) return;
+            if (!context.mounted) return;
             setState(() {
               isLoading = false;
             });

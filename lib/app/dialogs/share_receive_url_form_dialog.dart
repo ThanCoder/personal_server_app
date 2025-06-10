@@ -58,7 +58,6 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
       await DioServices.instance.getDio.get(url);
 
       if (!mounted) return;
-      debugPrint(url);
 
       setState(() {
         isLoading = false;
@@ -68,6 +67,7 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
       await RecentServices.instance
           .setValue<String>('share-host-address', urlController.text);
 
+      if (!mounted) return;
       Navigator.pop(context);
       Navigator.push(
         context,
