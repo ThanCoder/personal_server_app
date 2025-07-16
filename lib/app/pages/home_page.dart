@@ -48,12 +48,14 @@ class HomePage extends StatelessWidget {
                           .requestStoragePermission();
                       return;
                     }
+                    if(!context.mounted) return;
                     showDialog(
                       barrierDismissible: false,
                       context: context,
                       builder: (context) => ShareReceiveUrlFormDialog(),
                     );
                   } catch (e) {
+                    if(!context.mounted) return;
                     showDialogMessage(context, e.toString());
                   }
                 },

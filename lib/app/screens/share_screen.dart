@@ -249,6 +249,22 @@ class _ShareScreenState extends State<ShareScreen> {
                   ),
 
                   SliverToBoxAdapter(child: Divider()),
+                  SliverToBoxAdapter(child: hostAddress.isEmpty ? SizedBox.shrink(): Center(child: Text('address တစ်ခုခုနဲ့ စမ်းကြည့်ပါ'))),
+                  SliverToBoxAdapter(child: SizedBox(height: 10)),
+
+                  // ရနိုင်သော wifi list
+                  SliverList.separated(
+                    itemCount: hostAddress.length,
+                    itemBuilder: (context, index) {
+                      final ip = hostAddress[index];
+                      return ListTile(
+                        tileColor: 'http://$ip:$serverPort' == serverStatusText ? Colors.teal:null,
+                        title: Text(ip),
+                      );
+                    },
+                    separatorBuilder: (context, index) => Divider(),
+                  ),
+                  SliverToBoxAdapter(child: Divider()),
 
                   // list
                   SliverList.builder(
