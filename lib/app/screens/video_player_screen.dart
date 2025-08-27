@@ -3,8 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:person_server/app/components/core/index.dart';
-import 'package:person_server/app/widgets/core/index.dart';
 import 'package:than_pkg/than_pkg.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -72,7 +70,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      showDialogMessage(context, e.toString());
     }
   }
 
@@ -86,11 +83,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           await player.dispose();
         }
       },
-      child: MyScaffold(
-        contentPadding: 0,
-        appBar: AppBar(
-          title: Text('Video Player'),
-        ),
+      child: Scaffold(
+        appBar: AppBar(title: Text(widget.title)),
         body: Video(
           controller: _controller,
           onEnterFullscreen: () async {

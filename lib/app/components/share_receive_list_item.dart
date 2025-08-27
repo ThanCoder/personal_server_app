@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:person_server/app/extensions/index.dart';
 import 'package:person_server/app/models/share_file.dart';
-import 'package:person_server/app/widgets/index.dart';
+import 'package:t_widgets/t_widgets.dart';
+import 'package:than_pkg/than_pkg.dart';
 
 class ShareReceiveListItem extends StatelessWidget {
   String url;
@@ -22,39 +22,44 @@ class ShareReceiveListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => onClicked(share),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            spacing: 5,
-            children: [
-              share.mime.startsWith('image')
-                  ? SizedBox(
-                      width: 130,
-                      height: 130,
-                      child: MyImageUrl(url: '$url/image?path=${share.path}'),
-                    )
-                  : SizedBox.shrink(),
-              Expanded(
-                child: Column(
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Wrap(
+              spacing: 5,
+              runSpacing: 5,
+              children: [
+                SizedBox(
+                  width: 130,
+                  height: 130,
+                  child: TImageUrl(url: '$url/cover?path=${share.path}'),
+                ),
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 5,
                   children: [
                     Text(share.name),
                     Text(share.size.toDouble().toFileSizeLabel()),
                     Text(share.mime),
-                    Text(DateTime.fromMillisecondsSinceEpoch(share.date)
-                        .toParseTime()),
+                    Text(
+                      DateTime.fromMillisecondsSinceEpoch(
+                        share.date,
+                      ).toParseTime(),
+                    ),
                     IconButton(
                       onPressed: () => onDownloadClicked(share),
-                      icon: Icon(isExistsFile(share)
-                          ? Icons.download_done_rounded
-                          : Icons.download),
+                      icon: Icon(
+                        isExistsFile(share)
+                            ? Icons.download_done_rounded
+                            : Icons.download,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

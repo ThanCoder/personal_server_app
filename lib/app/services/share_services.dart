@@ -1,62 +1,54 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
-import 'package:mime/mime.dart';
-import 'package:person_server/app/extensions/datetime_extension.dart';
-import 'package:person_server/app/extensions/double_extension.dart';
 import 'package:person_server/app/models/share_file.dart';
-import 'package:real_path_file_selector/ui/extensions/index.dart';
-import 'package:t_server/t_server.dart';
-
-import '../utils/index.dart';
+import 'package:than_pkg/than_pkg.dart';
 
 class ShareServices {
   static Future<void> share(List<ShareFile> list) async {
-    TServer.instance.get('/', (req) {
-      // File('res.html').writeAsStringSync(html);
-      TServer.sendHtml(req, body: ShareServices.getHtml(list));
-    });
-    // send client
-    TServer.instance.get('/api', (req) {
-      final mapList = list.map((e) => e.toMap).toList();
-      final json = JsonEncoder.withIndent(' ').convert(mapList);
-      TServer.sendJson(req, body: json);
-    });
-    TServer.instance.get('/download', (req) {
-      final path = req.uri.queryParameters['path'] ?? '';
-      TServer.sendFile(req, path);
-    });
-    TServer.instance.get('/image', (req) {
-      final path = req.uri.queryParameters['path'] ?? '';
-      TServer.sendImage(req, path);
-    });
-    TServer.instance.get('/cover', (req) async {
-      final path = req.uri.queryParameters['path'] ?? '';
-      var assetName = 'file.png';
+    // TServer.instance.get('/', (req) {
+    //   // File('res.html').writeAsStringSync(html);
+    //   TServer.sendHtml(req, body: ShareServices.getHtml(list));
+    // });
+    // // send client
+    // TServer.instance.get('/api', (req) {
+    //   final mapList = list.map((e) => e.toMap).toList();
+    //   final json = JsonEncoder.withIndent(' ').convert(mapList);
+    //   TServer.sendJson(req, body: json);
+    // });
+    // TServer.instance.get('/download', (req) {
+    //   final path = req.uri.queryParameters['path'] ?? '';
+    //   TServer.sendFile(req, path);
+    // });
+    // TServer.instance.get('/image', (req) {
+    //   final path = req.uri.queryParameters['path'] ?? '';
+    //   TServer.sendImage(req, path);
+    // });
+    // TServer.instance.get('/cover', (req) async {
+    //   final path = req.uri.queryParameters['path'] ?? '';
+    //   var assetName = 'file.png';
 
-      final mime = lookupMimeType(path) ?? '';
-      if (mime.startsWith('image')) {
-        return TServer.sendImage(req, path);
-      }
-      if (mime.startsWith('video')) {
-        assetName = 'video.png';
-      }
-      if (mime.startsWith('application/pdf')) {
-        assetName = 'pdf.png';
-      }
-      final res = await rootBundle.load('assets/$assetName');
-      final img = File('${PathUtil.getCachePath()}/$assetName');
-      if (!img.existsSync()) {
-        img.writeAsBytesSync(res.buffer.asUint8List());
-      }
+    //   final mime = lookupMimeType(path) ?? '';
+    //   if (mime.startsWith('image')) {
+    //     return TServer.sendImage(req, path);
+    //   }
+    //   if (mime.startsWith('video')) {
+    //     assetName = 'video.png';
+    //   }
+    //   if (mime.startsWith('application/pdf')) {
+    //     assetName = 'pdf.png';
+    //   }
+    //   final res = await rootBundle.load('assets/$assetName');
+    //   final img = File('${PathUtil.getCachePath()}/$assetName');
+    //   if (!img.existsSync()) {
+    //     img.writeAsBytesSync(res.buffer.asUint8List());
+    //   }
 
-      TServer.sendImage(req, img.path);
-    });
-    TServer.instance.get('/stream', (req) {
-      final path = req.uri.queryParameters['path'] ?? '';
-      TServer.sendStreamVideo(req, path);
-    });
+    //   TServer.sendImage(req, img.path);
+    // });
+    // TServer.instance.get('/stream', (req) {
+    //   final path = req.uri.queryParameters['path'] ?? '';
+    //   TServer.sendStreamVideo(req, path);
+    // });
   }
 
   static List<ShareFile> getList(List<String> pathList) {
@@ -64,19 +56,22 @@ class ShareServices {
     for (var path in pathList) {
       final mime = lookupMimeType(path) ?? '';
       final file = File(path);
-      list.add(ShareFile(
-        name: file.getName(),
-        path: path,
-        mime: mime,
-        size: file.statSync().size,
-        date: file.statSync().modified.millisecondsSinceEpoch,
-      ));
+      list.add(
+        ShareFile(
+          name: file.getName(),
+          path: path,
+          mime: mime,
+          size: file.statSync().size,
+          date: file.statSync().modified.millisecondsSinceEpoch,
+        ),
+      );
     }
     return list;
   }
 
   static String getHtml(List<ShareFile> list) {
-    final html = '''
+    final html =
+        '''
           <!DOCTYPE html>
           <html>
           <head><title>Share Data</title></head>
@@ -85,7 +80,7 @@ class ShareServices {
             <h1>Share Data List</h1>
             <ul>
               ${list.map((e) {
-      return '''
+          return '''
             <li>
               <img src="/cover?path=${e.path}" alt="img"  width="190px" height="210px"/>
               <div class="column">
@@ -97,7 +92,7 @@ class ShareServices {
               </div>
             </li>
             ''';
-    }).join('<br/>')}
+        }).join('<br/>')}
             </ul>
           </body>
           </html>

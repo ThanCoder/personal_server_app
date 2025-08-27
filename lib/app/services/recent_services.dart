@@ -1,30 +1,31 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:person_server/app/utils/path_util.dart';
+import 'package:person_server/more_libs/setting_v2.2.0/core/index.dart';
+import 'package:than_pkg/than_pkg.dart';
 
 class RecentServices {
-  static final RecentServices instance = RecentServices._();
-  RecentServices._();
-  factory RecentServices() => instance;
-
-  Future<T> getValue<T>(String key, {required T defaultValue}) async {
-    final file = File(getPath);
-    if (!await file.exists()) return defaultValue;
-    Map<String, dynamic> map = jsonDecode(await file.readAsString());
-    return map[key] ?? defaultValue;
+  static Future<T> get<T>(String key, {required T defaultValue}) async {
+    final map = await getAll();
+    return TMap.get<T>(map, [key], defaultValue: defaultValue);
   }
 
-  Future<void> setValue<T>(String key, T value) async {
-    final file = File(getPath);
-    Map<String, dynamic> map = {};
-    if (await file.exists()) {
-      map = jsonDecode(await file.readAsString());
-    }
+  static Future<Map<String, dynamic>> getAll() async {
+    final file = File(_getDBPath);
+    if (!file.existsSync()) return {};
+    final json = jsonDecode(await file.readAsString());
+    return json as Map<String, dynamic>;
+  }
+
+  static Future<void> set(String key, String value) async {
+    final file = File(_getDBPath);
+    final map = await getAll();
     map[key] = value;
-    //save
-    await file.writeAsString(jsonEncode(map));
+    final contents = JsonEncoder.withIndent(' ').convert(map);
+    await file.writeAsString(contents);
   }
 
-  String get getPath => '${PathUtil.getCachePath()}/recent.db.json';
+  static String get _getDBPath {
+    return '${PathUtil.getDatabasePath()}/recent.db.json';
+  }
 }

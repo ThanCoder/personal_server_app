@@ -1,14 +1,13 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:person_server/app/components/index.dart';
 import 'package:person_server/app/constants.dart';
-import 'package:person_server/app/screens/receive_screen.dart';
-import 'package:person_server/app/services/index.dart';
 import 'package:person_server/app/services/recent_services.dart';
-import 'package:person_server/app/widgets/core/t_text_field.dart';
+import 'package:t_widgets/t_widgets.dart';
 import 'package:than_pkg/than_pkg.dart';
 
 class ShareReceiveUrlFormDialog extends StatefulWidget {
-  const ShareReceiveUrlFormDialog({super.key});
+  void Function(String url) onSuccess;
+  ShareReceiveUrlFormDialog({super.key, required this.onSuccess});
 
   @override
   State<ShareReceiveUrlFormDialog> createState() =>
@@ -23,74 +22,21 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
     init();
   }
 
+  bool isLoading = false;
+  bool isAliveUrl = false;
+  String? errorText;
+  Dio dio = Dio(
+    BaseOptions(
+      sendTimeout: Duration(seconds: 3),
+      connectTimeout: Duration(seconds: 3),
+      receiveTimeout: Duration(seconds: 3),
+    ),
+  );
+
   @override
   void dispose() {
     urlController.dispose();
     super.dispose();
-  }
-
-  bool isLoading = false;
-  bool isAliveUrl = false;
-  String? errorText;
-
-  void init() async {
-    try {
-      final hostList = await ThanPkg.platform.getWifiAddressList();
-      final res = await RecentServices.instance.getValue<String>(
-          'share-host-address',
-          defaultValue: hostList.isNotEmpty ? hostList.first : '');
-      urlController.text = res;
-      _checkHost();
-    } catch (e) {
-      if (!mounted) return;
-      showDialogMessage(context, e.toString());
-    }
-  }
-
-  void _checkHost() async {
-    try {
-      setState(() {
-        isLoading = true;
-        isAliveUrl = false;
-      });
-      final url = 'http://${urlController.text}:$serverPort';
-
-      await DioServices.instance.getDio.get(url);
-
-      if (!mounted) return;
-
-      setState(() {
-        isLoading = false;
-        isAliveUrl = true;
-        errorText = null;
-      });
-      await RecentServices.instance
-          .setValue<String>('share-host-address', urlController.text);
-
-      if (!mounted) return;
-      Navigator.pop(context);
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ReceiveScreen(url: url),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        isLoading = false;
-        isAliveUrl = false;
-        errorText = 'ချိတ်ဆက် မရပါ';
-      });
-    }
-  }
-
-  bool get _isGoButtonEnable {
-    if (isLoading) {
-      return false;
-    }
-    if (errorText == null) return false;
-    return true;
   }
 
   @override
@@ -123,5 +69,58 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
         ),
       ],
     );
+  }
+
+  void init() async {
+    try {
+      final hostList = await ThanPkg.platform.getWifiAddressList();
+      final oldUrl = await RecentServices.get<String>('url', defaultValue: '');
+      urlController.text = oldUrl.isEmpty ? hostList.first : oldUrl;
+      _checkHost();
+    } catch (e) {
+      if (!mounted) return;
+    }
+  }
+
+  void _checkHost() async {
+    try {
+      setState(() {
+        isLoading = true;
+        isAliveUrl = false;
+      });
+      final url = 'http://${urlController.text}:$serverPort';
+
+      await dio.get(url);
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+        isAliveUrl = true;
+        errorText = null;
+      });
+      // await RecentServices.instance
+      //     .setValue<String>('share-host-address', urlController.text);
+      await RecentServices.set('url', urlController.text);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onSuccess(url);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        isAliveUrl = false;
+        errorText = 'ချိတ်ဆက် မရပါ';
+      });
+    }
+  }
+
+  bool get _isGoButtonEnable {
+    if (isLoading) {
+      return false;
+    }
+    if (errorText == null) return false;
+    return true;
   }
 }
