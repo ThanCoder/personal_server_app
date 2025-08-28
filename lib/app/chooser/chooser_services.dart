@@ -42,6 +42,14 @@ class ChooserServices {
         await scanDir(dir);
       }
 
+      list.sort((a, b) {
+        final ad = a.statSync().modified.millisecondsSinceEpoch;
+        final bd = b.statSync().modified.millisecondsSinceEpoch;
+        if (ad > bd) return -1;
+        if (ad < bd) return 1;
+        return 0;
+      });
+
       return list;
     });
   }

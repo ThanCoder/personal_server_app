@@ -36,7 +36,7 @@ class _FileScannerState extends State<FileScanner> {
   bool isLoading = false;
   List<String> choosePath = [];
 
-  void init() async {
+  Future<void> init() async {
     try {
       setState(() {
         isLoading = true;
@@ -65,7 +65,21 @@ class _FileScannerState extends State<FileScanner> {
           choosePath.isEmpty
               ? SizedBox.shrink()
               : Text('Choose ${choosePath.length}'),
-          SizedBox(width: 10),
+          SizedBox(width: 20),
+          // unselect
+          choosePath.isEmpty
+              ? SizedBox.shrink()
+              : IconButton(
+                  onPressed: () {
+                    choosePath.clear();
+                    setState(() {});
+                  },
+                  icon: Icon(Icons.clear_all_rounded),
+                ),
+
+          !TPlatform.isDesktop
+              ? SizedBox.shrink()
+              : IconButton(onPressed: init, icon: Icon(Icons.refresh)),
         ],
         automaticallyImplyLeading: false,
       ),
@@ -73,11 +87,14 @@ class _FileScannerState extends State<FileScanner> {
         children: [
           isLoading
               ? Center(child: TLoader.random())
-              : CustomScrollView(
-                  slivers: [
-                    // list
-                    _getList(),
-                  ],
+              : RefreshIndicator.adaptive(
+                  onRefresh: init,
+                  child: CustomScrollView(
+                    slivers: [
+                      // list
+                      _getList(),
+                    ],
+                  ),
                 ),
           // botton bar
           Positioned(bottom: 0, right: 0, child: _getChooseButtonBar()),
@@ -90,62 +107,58 @@ class _FileScannerState extends State<FileScanner> {
     return SliverList.separated(
       itemCount: files.length,
       separatorBuilder: (context, index) => Divider(),
-      itemBuilder: (context, index) {
-        final item = files[index];
-        return GestureDetector(
-          onTap: () {
-            if (!item.isDirectory) {
-              _chooseToggle(item.path);
-              return;
-            }
-          },
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: choosePath.contains(item.path)
-                      ? const Color.fromARGB(96, 0, 150, 135)
-                      : null,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  spacing: 5,
-                  children: [
-                    _getCoverWiget(item),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 5,
-                        children: [
-                          Text(
-                            item.getName(),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            'Type: ${item.isDirectory ? 'Folder' : 'File'}',
-                          ),
-                          item.isFile
-                              ? Text(
-                                  item
-                                      .statSync()
-                                      .size
-                                      .toDouble()
-                                      .toFileSizeLabel(),
-                                )
-                              : SizedBox.shrink(),
-                        ],
+      itemBuilder: (context, index) => _getListItem(files[index]),
+    );
+  }
+
+  Widget _getListItem(FileSystemEntity file) {
+    return GestureDetector(
+      onTap: () {
+        if (!file.isDirectory) {
+          _chooseToggle(file.path);
+          return;
+        }
+      },
+      onSecondaryTap: () => _showItemMenu(file),
+      onLongPress: () => _showItemMenu(file),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          decoration: BoxDecoration(
+            color: choosePath.contains(file.path)
+                ? const Color.fromARGB(96, 0, 150, 135)
+                : null,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              spacing: 5,
+              children: [
+                _getCoverWiget(file),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 5,
+                    children: [
+                      Text(
+                        file.getName(),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      Text('Type: ${file.isDirectory ? 'Folder' : 'File'}'),
+                      file.isFile
+                          ? Text(file.getSizeLabel())
+                          : SizedBox.shrink(),
+                      Text('Date: ${file.statSync().modified.toParseTime()}'),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -201,6 +214,11 @@ class _FileScannerState extends State<FileScanner> {
     if (mime.startsWith('image')) {
       return file.path;
     }
+    if (mime.startsWith('audio')) {
+      final cachePath = '${PathUtil.getCachePath()}/mp3.png';
+      await PathUtil.getAssetRealPathPath('mp3.png');
+      return cachePath;
+    }
     if (mime.startsWith('video')) {
       final cachePath =
           '${PathUtil.getCachePath()}/${file.path.getName(withExt: false)}.png';
@@ -209,7 +227,8 @@ class _FileScannerState extends State<FileScanner> {
       );
       return cachePath;
       // assetName = 'video.png';
-    } else if (mime.endsWith('/pdf')) {
+    }
+    if (mime.endsWith('/pdf')) {
       // assetName = 'pdf.png';
       final cachePath =
           '${PathUtil.getCachePath()}/${file.path.getName(withExt: false)}.png';
@@ -228,5 +247,62 @@ class _FileScannerState extends State<FileScanner> {
       choosePath.add(path);
     }
     setState(() {});
+  }
+
+  // menu
+  void _showItemMenu(FileSystemEntity file) {
+    showTMenuBottomSheet(
+      context,
+      title: Text(file.getName()),
+      children: [
+        ListTile(
+          leading: Icon(Icons.info),
+          title: Text('Info'),
+          onTap: () {
+            Navigator.pop(context);
+            _showInfo(file);
+          },
+        ),
+        ListTile(
+          iconColor: Colors.red,
+          leading: Icon(Icons.delete_forever),
+          title: Text('Delete'),
+          onTap: () {
+            Navigator.pop(context);
+            _deleteConfirm(file);
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showInfo(FileSystemEntity file) {
+    showTAlertDialog(
+      context,
+      content: Text('''
+Name: ${file.getName()}
+Type: ${lookupMimeType(file.path)}
+Size: ${file.getSizeLabel()}
+Date: ${file.statSync().modified.toParseTime()}
+Path: ${file.path}
+'''),
+      actions: [],
+    );
+  }
+
+  void _deleteConfirm(FileSystemEntity file) {
+    showTConfirmDialog(
+      context,
+      contentText: 'ဖျက်ချင်တာသေချာပြီလား?',
+      submitText: 'Delete Forever',
+      onSubmit: () async {
+        await file.delete();
+        if (!mounted) return;
+        final index = files.indexWhere((e) => e.path == file.path);
+        if (index == -1) return;
+        files.removeAt(index);
+        setState(() {});
+      },
+    );
   }
 }

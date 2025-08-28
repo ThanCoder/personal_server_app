@@ -37,7 +37,7 @@ class _FileChooserState extends State<FileChooser> {
     WidgetsBinding.instance.addPostFrameCallback((_) => init());
   }
 
-  void init() async {
+  Future<void> init() async {
     if (widget.defaultPath != null) {
       currentPath = widget.defaultPath!;
     } else {
@@ -59,23 +59,42 @@ class _FileChooserState extends State<FileChooser> {
           choosePath.isEmpty
               ? SizedBox.shrink()
               : Text('Choose ${choosePath.length}'),
+          SizedBox(width: 20),
+          // unselect
+          choosePath.isEmpty
+              ? SizedBox.shrink()
+              : IconButton(
+                  onPressed: () {
+                    choosePath.clear();
+                    setState(() {});
+                  },
+                  icon: Icon(Icons.clear_all_rounded),
+                ),
           IconButton(onPressed: _showMenu, icon: Icon(Icons.more_vert)),
+          !TPlatform.isDesktop
+              ? SizedBox.shrink()
+              : IconButton(onPressed: _scanDir, icon: Icon(Icons.refresh)),
         ],
         automaticallyImplyLeading: false,
       ),
       body: Stack(
         children: [
-          CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                snap: true,
-                floating: true,
-                flexibleSpace: _getHeader(),
-                automaticallyImplyLeading: false,
-              ),
-              // list
-              _getList(),
-            ],
+          RefreshIndicator.adaptive(
+            onRefresh: () async {
+              _scanDir();
+            },
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  snap: true,
+                  floating: true,
+                  flexibleSpace: _getHeader(),
+                  automaticallyImplyLeading: false,
+                ),
+                // list
+                _getList(),
+              ],
+            ),
           ),
           // botton bar
           Positioned(bottom: 0, right: 0, child: _getChooseButtonBar()),
@@ -222,6 +241,11 @@ class _FileChooserState extends State<FileChooser> {
     if (mime.startsWith('image')) {
       return file.path;
     }
+    if (mime.startsWith('audio')) {
+      final cachePath = '${PathUtil.getCachePath()}/mp3.png';
+      await PathUtil.getAssetRealPathPath('mp3.png');
+      return cachePath;
+    }
     if (mime.startsWith('video')) {
       final cachePath =
           '${PathUtil.getCachePath()}/${file.path.getName(withExt: false)}.png';
@@ -252,7 +276,14 @@ class _FileChooserState extends State<FileChooser> {
       }
       files.add(file);
     }
-    files.sort((a, b) => a.getName().compareTo(b.getName()));
+    files.sort((a, b) {
+      // Folder ကို အပေါ်တင်
+      if (a.isDirectory && !b.isDirectory) return -1;
+      if (!a.isDirectory && b.isDirectory) return 1;
+
+      // တူရင် name အလိုက် A-Z
+      return a.path.toLowerCase().compareTo(b.path.toLowerCase());
+    });
     setState(() {});
   }
 

@@ -24,6 +24,7 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
 
   bool isLoading = false;
   bool isAliveUrl = false;
+  List<String> hostAddress = [];
   String? errorText;
   Dio dio = Dio(
     BaseOptions(
@@ -32,6 +33,19 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
       receiveTimeout: Duration(seconds: 3),
     ),
   );
+
+  void init() async {
+    try {
+      hostAddress = await ThanPkg.platform.getWifiAddressList();
+      final oldUrl = await RecentServices.get<String>('url', defaultValue: '');
+      urlController.text = oldUrl.isEmpty ? hostAddress.first : oldUrl;
+      // _checkHost();
+      setState(() {});
+    } catch (e) {
+      if (!mounted) return;
+      showTMessageDialogError(context, e.toString());
+    }
+  }
 
   @override
   void dispose() {
@@ -54,6 +68,7 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
             },
           ),
           isLoading ? LinearProgressIndicator() : SizedBox.shrink(),
+          _getHostAddressList(),
         ],
       ),
       actions: [
@@ -71,15 +86,19 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
     );
   }
 
-  void init() async {
-    try {
-      final hostList = await ThanPkg.platform.getWifiAddressList();
-      final oldUrl = await RecentServices.get<String>('url', defaultValue: '');
-      urlController.text = oldUrl.isEmpty ? hostList.first : oldUrl;
-      _checkHost();
-    } catch (e) {
-      if (!mounted) return;
-    }
+  Widget _getHostAddressList() {
+    return Column(
+      children: List.generate(hostAddress.length, (index) {
+        final address = hostAddress[index];
+        return ListTile(
+          title: Text(address),
+          onTap: () {
+            urlController.text = address;
+            _checkHost();
+          },
+        );
+      }),
+    );
   }
 
   void _checkHost() async {

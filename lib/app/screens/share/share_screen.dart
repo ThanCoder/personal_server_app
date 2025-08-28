@@ -11,6 +11,7 @@ import 'package:person_server/app/services/share_services.dart';
 import 'package:person_server/more_libs/setting_v2.2.0/core/index.dart';
 import 'package:person_server/more_libs/t_server_v1.0.0/core/http_extensions.dart';
 import 'package:person_server/more_libs/t_server_v1.0.0/t_server.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:t_widgets/t_widgets.dart';
 import 'package:than_pkg/than_pkg.dart';
 import 'package:than_pkg/types/src_dest_type.dart';
@@ -36,7 +37,7 @@ class _ShareScreenState extends State<ShareScreen> {
   }
 
   List<String> hostAddress = [];
-  List<ShareFile> list = [];
+  static List<ShareFile> list = [];
   String? defaultChooserPath;
 
   void init() async {
@@ -78,28 +79,26 @@ class _ShareScreenState extends State<ShareScreen> {
       child: Scaffold(
         body: CustomScrollView(
           slivers: [
-            SliverAppBar(title: Text('Share')),
+            SliverAppBar(
+              title: Text('Share'),
+              snap: true,
+              floating: true,
+              actions: [_getListClearBtn()],
+            ),
             //server status
             SliverToBoxAdapter(child: _getHeader()),
 
             SliverToBoxAdapter(child: Divider()),
             SliverToBoxAdapter(
               child: hostAddress.isEmpty
-                  ? SizedBox.shrink()
+                  ? null
                   : Center(child: Text('Address တစ်ခုခုနဲ့ စမ်းကြည့်ပါ')),
             ),
             SliverToBoxAdapter(child: SizedBox(height: 10)),
 
             // ရနိုင်သော wifi list
-            SliverList.separated(
-              itemCount: hostAddress.length,
-              itemBuilder: (context, index) {
-                final ip = hostAddress[index];
-                return ListTile(title: Text(ip));
-              },
-              separatorBuilder: (context, index) => Divider(),
-            ),
-            SliverToBoxAdapter(child: Divider()),
+            _getAddressList(),
+            SliverToBoxAdapter(child: hostAddress.isEmpty ? null : Divider()),
 
             // list
             _getList(),
@@ -113,67 +112,92 @@ class _ShareScreenState extends State<ShareScreen> {
     );
   }
 
+  Widget _getListClearBtn() {
+    if (list.isEmpty) return SizedBox.shrink();
+    return IconButton(
+      onPressed: () {
+        list.clear();
+        setState(() {});
+      },
+      icon: Icon(Icons.clear_all),
+    );
+  }
+
   Widget _getHeader() {
     return Column(
       spacing: 5,
       children: [
         GestureDetector(
           onTap: () {
-            // ThanPkg.platform.launch(serverStatusText);
+            ThanPkg.platform.launch(_getCurrentHostAddress());
           },
-          child: Text(
-            'Server Running On: http://${hostAddress.isNotEmpty ? hostAddress.first : 'localhost'}:${TServer.instance.getPort}',
-            style: TextStyle(color: Colors.green),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Text(
+              'Server Running On: ${_getCurrentHostAddress()}',
+              style: TextStyle(color: Colors.green),
+            ),
           ),
         ),
       ],
     );
   }
 
+  Widget _getAddressList() {
+    return SliverList.separated(
+      itemCount: hostAddress.length,
+      itemBuilder: (context, index) {
+        final address = hostAddress[index];
+        return ListTile(
+          title: Text(address, maxLines: 1, overflow: TextOverflow.ellipsis),
+          onTap: () => _showQr(address),
+        );
+      },
+      separatorBuilder: (context, index) => Divider(),
+    );
+  }
+
   Widget _getList() {
     return SliverList.builder(
       itemCount: list.length,
-      itemBuilder: (context, index) {
-        final share = list[index];
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Wrap(
+      itemBuilder: (context, index) => _getListItem(list[index]),
+    );
+  }
+
+  Widget _getListItem(ShareFile share) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Wrap(
+          spacing: 5,
+          runSpacing: 5,
+          children: [
+            _getCoverWiget(share),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 5,
-              runSpacing: 5,
               children: [
-                _getCoverWiget(share),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 5,
-                  children: [
-                    Text(share.name),
-                    Text(share.size.toDouble().toFileSizeLabel()),
-                    Text(share.mime),
-                    Text(
-                      DateTime.fromMillisecondsSinceEpoch(
-                        share.date,
-                      ).toParseTime(),
-                    ),
-                    IconButton(
-                      color: Colors.red,
-                      onPressed: () {
-                        final index = list.indexWhere(
-                          (e) => e.name == share.name,
-                        );
-                        if (index == -1) return;
-                        list.removeAt(index);
-                        setState(() {});
-                      },
-                      icon: Icon(Icons.delete_forever),
-                    ),
-                  ],
+                Text(share.name),
+                Text(share.size.toDouble().toFileSizeLabel()),
+                Text(share.mime),
+                Text(
+                  DateTime.fromMillisecondsSinceEpoch(share.date).toParseTime(),
+                ),
+                IconButton(
+                  color: Colors.red,
+                  onPressed: () {
+                    final index = list.indexWhere((e) => e.name == share.name);
+                    if (index == -1) return;
+                    list.removeAt(index);
+                    setState(() {});
+                  },
+                  icon: Icon(Icons.delete_forever),
                 ),
               ],
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 
@@ -203,6 +227,12 @@ class _ShareScreenState extends State<ShareScreen> {
       return filePath;
     }
     var assetName = 'file.png';
+    if (mime.startsWith('audio')) {
+      final cachePath = '${PathUtil.getCachePath()}/mp3.png';
+      await PathUtil.getAssetRealPathPath('mp3.png');
+      return cachePath;
+    }
+
     if (mime.startsWith('video')) {
       final cachePath =
           '${PathUtil.getCachePath()}/${filePath.getName(withExt: false)}.png';
@@ -210,9 +240,8 @@ class _ShareScreenState extends State<ShareScreen> {
         pathList: [SrcDestType(src: filePath, dest: cachePath)],
       );
       return cachePath;
-      // assetName = 'video.png';
-    } else if (mime.endsWith('/pdf')) {
-      // assetName = 'pdf.png';
+    }
+    if (mime.endsWith('/pdf')) {
       final cachePath =
           '${PathUtil.getCachePath()}/${filePath.getName(withExt: false)}.png';
       await ThanPkg.platform.genPdfThumbnail(
@@ -222,6 +251,10 @@ class _ShareScreenState extends State<ShareScreen> {
     }
     final coverPath = await PathUtil.getAssetRealPathPath(assetName);
     return coverPath;
+  }
+
+  String _getCurrentHostAddress() {
+    return 'http://${hostAddress.isNotEmpty ? hostAddress.first : 'localhost'}:${TServer.instance.getPort}';
   }
 
   void _share(List<String> pathList) async {
@@ -244,6 +277,29 @@ class _ShareScreenState extends State<ShareScreen> {
     setState(() {});
   }
 
+  void _showQr(String data) {
+    showTAlertDialog(
+      context,
+      content: SizedBox(
+        width: 200,
+        height: 200,
+        child: Column(
+          spacing: 5,
+          children: [
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: QrImageView(data: data),
+              ),
+            ),
+            Text('အခြားတစ်ဖက်ကနေ Scan လုပ်ပါ'),
+          ],
+        ),
+      ),
+      actions: [],
+    );
+  }
+
   void _showMenu() {
     showTMenuBottomSheet(
       context,
@@ -264,14 +320,22 @@ class _ShareScreenState extends State<ShareScreen> {
             _addVideos();
           },
         ),
-        // ListTile(
-        //   title: Text('Add Images'),
-        //   leading: Icon(Icons.add),
-        //   onTap: () {
-        //     Navigator.pop(context);
-        //     _addImages();
-        //   },
-        // ),
+        ListTile(
+          title: Text('Add Images'),
+          leading: Icon(Icons.add),
+          onTap: () {
+            Navigator.pop(context);
+            _addImages();
+          },
+        ),
+        ListTile(
+          title: Text('Add Mp3 (Audio)'),
+          leading: Icon(Icons.add),
+          onTap: () {
+            Navigator.pop(context);
+            _addAudios();
+          },
+        ),
         ListTile(
           title: Text('Add Folder Path'),
           leading: Icon(Icons.add),
@@ -303,6 +367,32 @@ class _ShareScreenState extends State<ShareScreen> {
       builder: (context) => FileScanner(
         title: 'Choose Videos',
         mimeType: 'video',
+        onChoosed: (pathList) {
+          _share(pathList);
+        },
+      ),
+    );
+  }
+
+  void _addImages() async {
+    goRoute(
+      context,
+      builder: (context) => FileScanner(
+        title: 'Choose Images',
+        mimeType: 'image',
+        onChoosed: (pathList) {
+          _share(pathList);
+        },
+      ),
+    );
+  }
+
+  void _addAudios() async {
+    goRoute(
+      context,
+      builder: (context) => FileScanner(
+        title: 'Choose Audio',
+        mimeType: 'audio',
         onChoosed: (pathList) {
           _share(pathList);
         },
