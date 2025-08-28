@@ -26,7 +26,7 @@ class _ShareScreenState extends State<ShareScreen> {
   @override
   void initState() {
     super.initState();
-    init();
+    WidgetsBinding.instance.addPostFrameCallback((_) => init());
   }
 
   @override
@@ -41,7 +41,6 @@ class _ShareScreenState extends State<ShareScreen> {
 
   void init() async {
     try {
-      hostAddress = await ThanPkg.platform.getWifiAddressList();
       await ThanPkg.platform.toggleKeepScreen(isKeep: true);
       TServer.instance.get('/', (req) {
         req.sendHtml(ShareServices.getHtml(list));
@@ -51,20 +50,14 @@ class _ShareScreenState extends State<ShareScreen> {
         final json = JsonEncoder.withIndent(' ').convert(mapList);
         req.sendJson(json);
       });
-      TServer.instance.get('/download', (req) {
-        final path = req.getQueryParameters()['path'] ?? '';
-        req.sendFile(path);
-      });
-      TServer.instance.get('/stream', (req) {
-        final path = req.getQueryParameters()['path'] ?? '';
-        req.sendVideoStream(path);
-      });
+
       TServer.instance.get('/cover', (req) async {
         final path = req.getQueryParameters()['path'] ?? '';
         final coverPath = await _getCoverPath(path);
         req.sendFile(coverPath);
       });
-      TServer.instance.startListen(port: 9000);
+      _checkWifiAddress();
+      // TServer.instance.startListen(port: 9000);
       if (!mounted) return;
       setState(() {});
     } catch (e) {
@@ -129,7 +122,7 @@ class _ShareScreenState extends State<ShareScreen> {
             // ThanPkg.platform.launch(serverStatusText);
           },
           child: Text(
-            'Server Running On: http://localhost:${TServer.instance.getPort}',
+            'Server Running On: http://${hostAddress.isNotEmpty ? hostAddress.first : 'localhost'}:${TServer.instance.getPort}',
             style: TextStyle(color: Colors.green),
           ),
         ),
@@ -244,6 +237,11 @@ class _ShareScreenState extends State<ShareScreen> {
     } catch (e) {
       debugPrint('_share:error ${e.toString()}');
     }
+  }
+
+  void _checkWifiAddress() async {
+    hostAddress = await ThanPkg.platform.getWifiAddressList();
+    setState(() {});
   }
 
   void _showMenu() {

@@ -32,6 +32,12 @@ class _DownloaderDialogState extends State<DownloaderDialog> {
     init();
   }
 
+  @override
+  void dispose() {
+    ThanPkg.platform.toggleFullScreen(isFullScreen: false);
+    super.dispose();
+  }
+
   final dio = Dio();
   final CancelToken cancelToken = CancelToken();
   double fileSize = 0;
@@ -39,6 +45,7 @@ class _DownloaderDialogState extends State<DownloaderDialog> {
 
   void init() async {
     try {
+      await ThanPkg.platform.toggleFullScreen(isFullScreen: true);
       //download file
       await dio.download(
         Uri.encodeFull(widget.url),
