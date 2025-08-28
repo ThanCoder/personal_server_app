@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/rendering.dart';
+import 'package:than_pkg/than_pkg.dart';
 
 import 't_encoder.dart';
 
@@ -62,6 +63,60 @@ extension HttpExtensions on HttpRequest {
           ..write('File not found')
           ..close();
       }
+    } catch (e) {
+      debugPrint(e.toString());
+      response
+        ..statusCode = HttpStatus.internalServerError
+        ..write('Server Error')
+        ..close();
+    }
+  }
+
+  Future<void> uploadFile(String outPath) async {
+    try {
+      final contentType = headers.contentType;
+      if (contentType == null ||
+          !contentType.mimeType.startsWith('multipart/form-data')) {
+        response
+          ..statusCode = HttpStatus.unsupportedMediaType
+          ..write('Only multipart/form-data supported')
+          ..close();
+        return;
+      }
+
+      // parse multipart form
+      final transformer = MimeMultipartTransformer(
+        contentType.parameters['boundary']!,
+      );
+      final bodyStream = cast<List<int>>().transform(transformer);
+
+      await for (MimeMultipart part in bodyStream) {
+        final headers = part.headers;
+        if (headers['content-disposition'] != null &&
+            headers['content-disposition']!.contains('filename=')) {
+          // extract filename
+          final contentDisposition = headers['content-disposition']!;
+          final filename =
+              RegExp(
+                r'filename="(.+)"',
+              ).firstMatch(contentDisposition)?.group(1) ??
+              'upload_${DateTime.now().millisecondsSinceEpoch}';
+
+          final file = File('$outPath/$filename');
+          await file.create(recursive: true);
+
+          final sink = file.openWrite();
+          await part.pipe(sink);
+          await sink.close();
+
+          debugPrint("Uploaded file: ${file.path}");
+        }
+      }
+
+      response
+        ..statusCode = HttpStatus.ok
+        ..write('Upload successful')
+        ..close();
     } catch (e) {
       debugPrint(e.toString());
       response

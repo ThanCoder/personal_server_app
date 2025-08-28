@@ -94,12 +94,6 @@ class _MultiDownloaderDialogState extends State<MultiDownloaderDialog> {
           },
           child: const Text('Cancel'),
         ),
-        // TextButton(
-        //   onPressed:() {
-        //           Navigator.pop(context);
-        //         },
-        //   child: const Text('Upgrade'),
-        // ),
       ],
     );
   }

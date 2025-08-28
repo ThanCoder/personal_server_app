@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:person_server/more_libs/setting_v2.2.0/core/index.dart';
 import 'package:person_server/more_libs/setting_v2.2.0/setting.dart';
 import 'package:person_server/more_libs/t_server_v1.0.0/core/http_extensions.dart';
 import 'package:person_server/more_libs/t_server_v1.0.0/t_server.dart';
 import 'package:t_widgets/functions/index.dart';
+import 'package:than_pkg/than_pkg.dart';
 import 'screens/index.dart';
 
 class MyApp extends StatefulWidget {
@@ -29,7 +31,13 @@ class _MyAppState extends State<MyApp> {
         final path = req.getQueryParameters()['path'] ?? '';
         req.sendVideoStream(path);
       });
+      TServer.instance.post('/upload', (req) {
+        req.uploadFile(PathUtil.getOutPath());
+      });
       TServer.instance.startListen(port: 9000);
+      if (!await ThanPkg.platform.isStoragePermissionGranted()) {
+        await ThanPkg.platform.requestStoragePermission();
+      }
     } catch (e) {
       if (!mounted) return;
       showTMessageDialogError(context, e.toString());

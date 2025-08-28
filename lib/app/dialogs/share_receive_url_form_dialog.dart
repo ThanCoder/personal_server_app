@@ -23,7 +23,6 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
   }
 
   bool isLoading = false;
-  bool isAliveUrl = false;
   List<String> hostAddress = [];
   String? errorText;
   Dio dio = Dio(
@@ -78,10 +77,7 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
           },
           child: Text('Close'),
         ),
-        TextButton(
-          onPressed: _isGoButtonEnable ? _checkHost : null,
-          child: Text('စမ်းသပ်'),
-        ),
+        TextButton(onPressed: _checkHost, child: Text('စမ်းသပ်')),
       ],
     );
   }
@@ -105,7 +101,6 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
     try {
       setState(() {
         isLoading = true;
-        isAliveUrl = false;
       });
       final url = 'http://${urlController.text}:$serverPort';
 
@@ -115,7 +110,6 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
 
       setState(() {
         isLoading = false;
-        isAliveUrl = true;
         errorText = null;
       });
       // await RecentServices.instance
@@ -129,17 +123,8 @@ class _ShareReceiveUrlFormDialogState extends State<ShareReceiveUrlFormDialog> {
       if (!mounted) return;
       setState(() {
         isLoading = false;
-        isAliveUrl = false;
         errorText = 'ချိတ်ဆက် မရပါ';
       });
     }
-  }
-
-  bool get _isGoButtonEnable {
-    if (isLoading) {
-      return false;
-    }
-    if (errorText == null) return false;
-    return true;
   }
 }

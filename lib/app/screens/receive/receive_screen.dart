@@ -1,10 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:person_server/app/chooser/file_chooser.dart';
+import 'package:person_server/app/chooser/file_scanner.dart';
 import 'package:person_server/app/components/share_receive_list_item.dart';
 import 'package:person_server/app/dialogs/downloader_dialog.dart';
 import 'package:person_server/app/dialogs/multi_downloader_dialog.dart';
+import 'package:person_server/app/dialogs/multi_uploader_dialog.dart';
 import 'package:person_server/app/models/share_file.dart';
+import 'package:person_server/app/routes_helper.dart';
 import 'package:person_server/app/screens/index.dart';
 import 'package:person_server/app/services/dio_services.dart';
 import 'package:person_server/more_libs/setting_v2.2.0/core/path_util.dart';
@@ -28,6 +32,7 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
 
   bool isLoading = false;
   List<ShareFile> list = [];
+  String? defaultChooserPath;
 
   Future<void> init() async {
     try {
@@ -83,6 +88,10 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
             _getListWidget(),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddMenu,
+        child: Icon(Icons.upload_file),
       ),
     );
   }
@@ -174,6 +183,113 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
             return;
           }
           setState(() {});
+        },
+      ),
+    );
+  }
+
+  // menu
+  void _showAddMenu() {
+    showTMenuBottomSheet(
+      context,
+      children: [
+        ListTile(
+          title: Text('Upload Files'),
+          leading: Icon(Icons.add),
+          onTap: () {
+            Navigator.pop(context);
+            _addFiles();
+          },
+        ),
+        ListTile(
+          title: Text('Upload Videos'),
+          leading: Icon(Icons.add),
+          onTap: () {
+            Navigator.pop(context);
+            _addVideos();
+          },
+        ),
+        ListTile(
+          title: Text('Upload Images'),
+          leading: Icon(Icons.add),
+          onTap: () {
+            Navigator.pop(context);
+            _addImages();
+          },
+        ),
+        ListTile(
+          title: Text('Upload Mp3 (Audio)'),
+          leading: Icon(Icons.add),
+          onTap: () {
+            Navigator.pop(context);
+            _addAudios();
+          },
+        ),
+      ],
+    );
+  }
+
+  void _addFiles() async {
+    goRoute(
+      context,
+      builder: (context) => FileChooser(
+        defaultPath: defaultChooserPath,
+        onChoosed: (pathList, currentPath) {
+          defaultChooserPath = currentPath;
+          _uploadFiles(pathList);
+        },
+      ),
+    );
+  }
+
+  void _addVideos() async {
+    goRoute(
+      context,
+      builder: (context) => FileScanner(
+        title: 'Choose Videos',
+        mimeType: 'video',
+        onChoosed: (pathList) {
+          _uploadFiles(pathList);
+        },
+      ),
+    );
+  }
+
+  void _addImages() async {
+    goRoute(
+      context,
+      builder: (context) => FileScanner(
+        title: 'Choose Images',
+        mimeType: 'image',
+        onChoosed: (pathList) {
+          _uploadFiles(pathList);
+        },
+      ),
+    );
+  }
+
+  void _addAudios() async {
+    goRoute(
+      context,
+      builder: (context) => FileScanner(
+        title: 'Choose Audio',
+        mimeType: 'audio',
+        onChoosed: (pathList) {
+          _uploadFiles(pathList);
+        },
+      ),
+    );
+  }
+
+  void _uploadFiles(List<String> pathList) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => MultiUploaderDialog(
+        hostUrl: widget.url,
+        pathList: pathList,
+        onSuccess: () {
+          showTMessageDialog(context, 'Upload လုပ်ပြီးပါပြီ');
         },
       ),
     );
