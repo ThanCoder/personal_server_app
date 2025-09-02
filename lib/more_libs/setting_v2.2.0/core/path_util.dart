@@ -21,40 +21,52 @@ class PathUtil {
     return path.split('/').last;
   }
 
-  static String getHomePath() {
-    return createDir(Setting.appRootPath);
+  static String getHomePath({String? name}) {
+    final dirPath = createDir(Setting.appRootPath);
+    final fileName = (name != null && name.isNotEmpty) ? '/$name' : '';
+    return '$dirPath$fileName';
   }
 
-  static String getConfigPath() {
-    return createDir('${getHomePath()}/config');
+  static String getConfigPath({String? name}) {
+    final dirPath = createDir('${getHomePath()}/config');
+    final fileName = (name != null && name.isNotEmpty) ? '/$name' : '';
+    return '$dirPath$fileName';
   }
 
-  static String getLibaryPath() {
-    return createDir('${getHomePath()}/libary');
+  static String getLibaryPath({String? name}) {
+    final dirPath = createDir('${getHomePath()}/libary');
+    final fileName = (name != null && name.isNotEmpty) ? '/$name' : '';
+    return '$dirPath$fileName';
   }
 
-  static String getDatabasePath() {
-    return createDir('${getHomePath()}/database');
+  static String getDatabasePath({String? name}) {
+    final dirPath = createDir('${getHomePath()}/database');
+    final fileName = (name != null && name.isNotEmpty) ? '/$name' : '';
+    return '$dirPath$fileName';
   }
 
   static String getDatabaseSourcePath() {
     return createDir('${getHomePath()}/databaseSource');
   }
 
-  static String getCachePath() {
+  static String getCachePath({String? name}) {
     String homeDir = createDir(Setting.appConfigPath);
-    return createDir('$homeDir/cache');
+    final dirPath = createDir('$homeDir/cache');
+    final fileName = (name != null && name.isNotEmpty) ? '/$name' : '';
+    return '$dirPath$fileName';
   }
 
   static String getSourcePath() {
     return createDir('${getHomePath()}/source');
   }
 
-  static String getOutPath() {
+  static String getOutPath({String? name}) {
     String download = createDir(
       '${Setting.appExternalPath}/${Platform.isAndroid ? 'Download' : 'Downloads'}',
     );
-    return createDir('$download/${Setting.instance.appName}');
+    final dirPath = createDir('$download/${Setting.instance.appName}');
+    final fileName = (name != null && name.isNotEmpty) ? '/$name' : '';
+    return '$dirPath$fileName';
   }
 
   static String createDir(String path) {
@@ -62,11 +74,28 @@ class PathUtil {
       if (path.isEmpty) path;
       final dir = Directory(path);
       if (!dir.existsSync()) {
-        dir.createSync();
+        dir.createSync(recursive: true);
       }
     } catch (e) {
       Setting.showDebugLog(e.toString(), tag: 'PathUtil:createDir');
     }
     return path;
   }
+
+  static Future<void> deleteDir(Directory directory) async {
+    Future<void> scanDir(Directory dir) async {
+      for (var file in dir.listSync(followLinks: false)) {
+        if (file.isDirectory) {
+          await scanDir(Directory(file.path));
+          await file.delete();
+        } else {
+          await file.delete();
+        }
+      }
+    }
+
+    await scanDir(directory);
+    await directory.delete(recursive: true);
+  }
 }
+

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
+import 'package:person_server/app/chooser/apk_scanner.dart';
 import 'package:person_server/app/chooser/file_chooser.dart';
 import 'package:person_server/app/chooser/file_scanner.dart';
 import 'package:person_server/app/models/share_file.dart';
@@ -14,6 +15,7 @@ import 'package:person_server/more_libs/t_server_v1.0.0/t_server.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:t_widgets/t_widgets.dart';
 import 'package:than_pkg/than_pkg.dart';
+import 'package:than_pkg/types/installed_app.dart';
 import 'package:than_pkg/types/src_dest_type.dart';
 
 class ShareScreen extends StatefulWidget {
@@ -77,32 +79,34 @@ class _ShareScreenState extends State<ShareScreen> {
         _share(res);
       },
       child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              title: Text('Share'),
-              snap: true,
-              floating: true,
-              actions: [_getListClearBtn()],
-            ),
-            //server status
-            SliverToBoxAdapter(child: _getHeader()),
+        body: SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                title: Text('Share'),
+                snap: true,
+                floating: true,
+                actions: [_getListClearBtn()],
+              ),
+              //server status
+              SliverToBoxAdapter(child: _getHeader()),
 
-            SliverToBoxAdapter(child: Divider()),
-            SliverToBoxAdapter(
-              child: hostAddress.isEmpty
-                  ? null
-                  : Center(child: Text('Address တစ်ခုခုနဲ့ စမ်းကြည့်ပါ')),
-            ),
-            SliverToBoxAdapter(child: SizedBox(height: 10)),
+              SliverToBoxAdapter(child: Divider()),
+              SliverToBoxAdapter(
+                child: hostAddress.isEmpty
+                    ? null
+                    : Center(child: Text('Address တစ်ခုခုနဲ့ စမ်းကြည့်ပါ')),
+              ),
+              SliverToBoxAdapter(child: SizedBox(height: 10)),
 
-            // ရနိုင်သော wifi list
-            _getAddressList(),
-            SliverToBoxAdapter(child: hostAddress.isEmpty ? null : Divider()),
+              // ရနိုင်သော wifi list
+              _getAddressList(),
+              SliverToBoxAdapter(child: hostAddress.isEmpty ? null : Divider()),
 
-            // list
-            _getList(),
-          ],
+              // list
+              _getList(),
+            ],
+          ),
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: _showMenu,
@@ -336,6 +340,16 @@ class _ShareScreenState extends State<ShareScreen> {
             _addAudios();
           },
         ),
+        !Platform.isAndroid
+            ? SizedBox.shrink()
+            : ListTile(
+                title: Text('Add App (Apk)'),
+                leading: Icon(Icons.add),
+                onTap: () {
+                  Navigator.pop(context);
+                  _addApk();
+                },
+              ),
         ListTile(
           title: Text('Add Folder Path'),
           leading: Icon(Icons.add),
@@ -400,6 +414,13 @@ class _ShareScreenState extends State<ShareScreen> {
     );
   }
 
+  void _addApk() async {
+    goRoute(
+      context,
+      builder: (context) => ApkScanner(onChoosed: _addApkRealPath),
+    );
+  }
+
   void _addFolderPath() async {
     showDialog(
       context: context,
@@ -417,5 +438,16 @@ class _ShareScreenState extends State<ShareScreen> {
         },
       ),
     );
+  }
+
+  void _addApkRealPath(List<InstalledApp> list) async {
+    List<String> pathList = [];
+    for (var app in list) {
+      final file = File(PathUtil.getCachePath(name: '${app.appName}.apk'));
+      if (file.existsSync()) continue;
+      await app.export(file.path);
+      pathList.add(file.path);
+    }
+    _share(pathList);
   }
 }

@@ -72,6 +72,7 @@ class _MultiUploaderDialogState extends State<MultiUploaderDialog> {
 
     if (!mounted) return;
     Navigator.pop(context);
+    widget.onSuccess();
   }
 
   @override
