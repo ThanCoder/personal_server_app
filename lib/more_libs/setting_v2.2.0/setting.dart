@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:than_pkg/than_pkg.dart';
 
 import 'core/index.dart';
+import 'core/theme_modes_chooser.dart';
 
 class Setting {
   // singleton
@@ -23,6 +24,7 @@ class Setting {
   //widget
   static Widget get getHomeScreen => AppSettingScreen();
   static Widget get getThemeSwitcherWidget => ThemeComponent();
+  static Widget get getThemeModeChooserWidget => ThemeModesChooser();
   static Widget get getSettingListTileWidget => AppSettingListTile();
   static Widget get getCurrentVersionWidget => AppCurrentVersion();
   static Widget get getCacheManagerWidget => AppCacheManager();

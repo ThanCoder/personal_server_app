@@ -11,7 +11,7 @@ class AppMorePage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Setting.getThemeSwitcherWidget,
+            Setting.getThemeModeChooserWidget,
             Setting.getCurrentVersionWidget,
             Setting.getSettingListTileWidget,
 

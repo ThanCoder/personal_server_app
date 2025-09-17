@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:person_server/more_libs/setting_v2.2.0/core/index.dart';
-import 'package:person_server/more_libs/setting_v2.2.0/setting.dart';
-import 'package:person_server/more_libs/t_server_v1.0.0/core/http_extensions.dart';
-import 'package:person_server/more_libs/t_server_v1.0.0/t_server.dart';
+import 'package:person_server/more_libs/setting_v2.2.0/core/theme_switcher.dart';
+import 'package:t_server/t_server.dart';
 import 'package:t_widgets/functions/index.dart';
 import 'package:than_pkg/than_pkg.dart';
 import 'screens/index.dart';
@@ -24,11 +23,11 @@ class _MyAppState extends State<MyApp> {
   void init() async {
     try {
       TServer.instance.get('/download', (req) {
-        final path = req.getQueryParameters()['path'] ?? '';
+        final path = req.getQueryParameters['path'] ?? '';
         req.sendFile(path);
       });
       TServer.instance.get('/stream', (req) {
-        final path = req.getQueryParameters()['path'] ?? '';
+        final path = req.getQueryParameters['path'] ?? '';
         req.sendVideoStream(path);
       });
       TServer.instance.post('/upload', (req) {
@@ -52,9 +51,8 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: Setting.getAppConfigNotifier,
-      builder: (context, config, child) {
+    return ThemeSwitcher(
+      builder: (config) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           darkTheme: ThemeData.dark(useMaterial3: true),

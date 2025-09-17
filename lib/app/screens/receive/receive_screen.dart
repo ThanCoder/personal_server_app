@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:person_server/app/chooser/file_chooser.dart';
 import 'package:person_server/app/chooser/file_scanner.dart';
 import 'package:person_server/app/components/share_receive_list_item.dart';
-import 'package:person_server/app/dialogs/downloader_dialog.dart';
-import 'package:person_server/app/dialogs/multi_downloader_dialog.dart';
 import 'package:person_server/app/dialogs/multi_uploader_dialog.dart';
 import 'package:person_server/app/models/share_file.dart';
 import 'package:person_server/app/routes_helper.dart';
 import 'package:person_server/app/screens/index.dart';
+import 'package:person_server/app/screens/receive/t_client_download_manager.dart';
 import 'package:person_server/app/services/dio_services.dart';
 import 'package:person_server/more_libs/setting_v2.2.0/core/path_util.dart';
 import 'package:t_widgets/t_widgets.dart';
@@ -133,10 +132,9 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     showDialog(
       barrierDismissible: false,
       context: context,
-      builder: (context) => DownloaderDialog(
-        url: '${widget.url}/download?path=${share.path}',
-        saveFullPath: savePath,
-        message: '`${share.name}` Downloading...',
+      builder: (context) => TMultiDownloaderDialog(
+        manager: ClientDownloader(isFileExistsOverride: true),
+        urls: ['${widget.url}/download?path=${share.path}'],
         onError: (msg) {
           showTMessageDialogError(context, msg);
           setState(() {});
@@ -174,14 +172,14 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => MultiDownloaderDialog(
-        downloadUrlList: downloadUrlList,
-        onClosed: (errorMsg) {
+      builder: (context) => TMultiDownloaderDialog(
+        manager: ClientDownloader(),
+        urls: downloadUrlList,
+        onError: (msg) {
+          showTMessageDialogError(context, msg);
           setState(() {});
-          if (errorMsg.isNotEmpty) {
-            // showDialogMessage(context, errorMsg);
-            return;
-          }
+        },
+        onSuccess: () {
           setState(() {});
         },
       ),
@@ -294,4 +292,6 @@ class _ReceiveScreenState extends State<ReceiveScreen> {
       ),
     );
   }
+
+  // item menu
 }

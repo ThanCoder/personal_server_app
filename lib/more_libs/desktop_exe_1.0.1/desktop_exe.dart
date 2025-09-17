@@ -49,9 +49,7 @@ class DesktopExe {
       stringBuff.writeln(
         'Exec=${getSpaceEscape(customExePath ?? Platform.resolvedExecutable)}',
       );
-      stringBuff.writeln(
-        'Icon=${getSpaceEscape(customIconPath ?? assetsRealIconPath)}',
-      );
+      stringBuff.writeln('Icon=${customIconPath ?? assetsRealIconPath}');
       stringBuff.writeln(
         'Path=${getSpaceEscape(File(customExePath ?? Platform.resolvedExecutable).parent.path)}',
       );

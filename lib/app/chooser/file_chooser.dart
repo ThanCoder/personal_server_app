@@ -1,10 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:person_server/more_libs/setting_v2.2.0/core/path_util.dart';
+import 'package:person_server/app/chooser/file_list_item.dart';
 import 'package:t_widgets/t_widgets.dart';
 import 'package:than_pkg/than_pkg.dart';
-import 'package:than_pkg/types/index.dart';
 
 typedef OnChoosed = void Function(List<String> pathList, String currentPath);
 
@@ -129,81 +128,21 @@ class _FileChooserState extends State<FileChooser> {
       itemCount: files.length,
       separatorBuilder: (context, index) => Divider(),
       itemBuilder: (context, index) {
-        final item = files[index];
-        return GestureDetector(
-          onTap: () {
-            if (!item.isDirectory) {
-              _chooseToggle(item.path);
+        final file = files[index];
+        return FileListItem(
+          file: file,
+          choosedPath: choosePath,
+          onRightClicked: _showItemMenu,
+          onClicked: (file) {
+            if (!file.isDirectory) {
+              _chooseToggle(file.path);
               return;
             }
-            currentPath = item.path;
+            currentPath = file.path;
             _scanDir();
           },
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: choosePath.contains(item.path)
-                      ? const Color.fromARGB(96, 0, 150, 135)
-                      : null,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  spacing: 5,
-                  children: [
-                    _getCoverWiget(item),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 5,
-                        children: [
-                          Text(
-                            item.getName(),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text('Type: ${item.isDirectory ? 'Folder' : 'File'}'),
-                          item.isFile
-                              ? Text(
-                                  item
-                                      .statSync()
-                                      .size
-                                      .toDouble()
-                                      .toFileSizeLabel(),
-                                )
-                              : SizedBox.shrink(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
         );
       },
-    );
-  }
-
-  Widget _getCoverWiget(FileSystemEntity file) {
-    return SizedBox(
-      width: 100,
-      height: 100,
-      child: FutureBuilder(
-        future: _getCoverPath(file),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return TLoader.random();
-          }
-          var path = '';
-          if (snapshot.hasData) {
-            path = snapshot.data ?? '';
-          }
-          return TImage(source: path);
-        },
-      ),
     );
   }
 
@@ -229,41 +168,6 @@ class _FileChooserState extends State<FileChooser> {
         ],
       ),
     );
-  }
-
-  Future<String> _getCoverPath(FileSystemEntity file) async {
-    if (file.isDirectory) {
-      final cachePath = '${PathUtil.getCachePath()}/folder.png';
-      await PathUtil.getAssetRealPathPath('folder.png');
-      return cachePath;
-    }
-    final mime = lookupMimeType(file.path) ?? '';
-    if (mime.startsWith('image')) {
-      return file.path;
-    }
-    if (mime.startsWith('audio')) {
-      final cachePath = '${PathUtil.getCachePath()}/mp3.png';
-      await PathUtil.getAssetRealPathPath('mp3.png');
-      return cachePath;
-    }
-    if (mime.startsWith('video')) {
-      final cachePath =
-          '${PathUtil.getCachePath()}/${file.path.getName(withExt: false)}.png';
-      await ThanPkg.platform.genVideoThumbnail(
-        pathList: [SrcDestType(src: file.path, dest: cachePath)],
-      );
-      return cachePath;
-      // assetName = 'video.png';
-    } else if (mime.endsWith('/pdf')) {
-      // assetName = 'pdf.png';
-      final cachePath =
-          '${PathUtil.getCachePath()}/${file.path.getName(withExt: false)}.png';
-      await ThanPkg.platform.genPdfThumbnail(
-        pathList: [SrcDestType(src: file.path, dest: cachePath)],
-      );
-      return cachePath;
-    }
-    return '';
   }
 
   void _scanDir() {
@@ -304,6 +208,7 @@ class _FileChooserState extends State<FileChooser> {
     setState(() {});
   }
 
+  // main menu
   void _showMenu() {
     showTMenuBottomSheet(
       context,
@@ -321,6 +226,63 @@ class _FileChooserState extends State<FileChooser> {
           ),
         ),
       ],
+    );
+  }
+
+  // item menu
+  void _showItemMenu(FileSystemEntity file) {
+    showTMenuBottomSheet(
+      context,
+      title: Text(file.getName()),
+      children: [
+        ListTile(
+          leading: Icon(Icons.info),
+          title: Text('Info'),
+          onTap: () {
+            Navigator.pop(context);
+            _showInfo(file);
+          },
+        ),
+        ListTile(
+          iconColor: Colors.red,
+          leading: Icon(Icons.delete_forever),
+          title: Text('Delete'),
+          onTap: () {
+            Navigator.pop(context);
+            _deleteConfirm(file);
+          },
+        ),
+      ],
+    );
+  }
+
+  void _showInfo(FileSystemEntity file) {
+    showTAlertDialog(
+      context,
+      content: Text('''
+Name: ${file.getName()}
+Type: ${lookupMimeType(file.path)}
+Size: ${file.getSizeLabel()}
+Date: ${file.statSync().modified.toParseTime()}
+Path: ${file.path}
+'''),
+      actions: [],
+    );
+  }
+
+  void _deleteConfirm(FileSystemEntity file) {
+    showTConfirmDialog(
+      context,
+      contentText: 'ဖျက်ချင်တာသေချာပြီလား?',
+      submitText: 'Delete Forever',
+      onSubmit: () async {
+        await file.delete();
+        if (!mounted) return;
+        final index = files.indexWhere((e) => e.path == file.path);
+        if (index == -1) return;
+        files.removeAt(index);
+        setState(() {});
+      },
     );
   }
 }

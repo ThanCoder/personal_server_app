@@ -2,10 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:person_server/app/chooser/chooser_services.dart';
-import 'package:person_server/more_libs/setting_v2.2.0/core/path_util.dart';
+import 'package:person_server/app/chooser/file_list_item.dart';
 import 'package:t_widgets/t_widgets.dart';
 import 'package:than_pkg/than_pkg.dart';
-import 'package:than_pkg/types/src_dest_type.dart';
 
 typedef OnChoosed = void Function(List<String> pathList);
 
@@ -112,73 +111,16 @@ class _FileScannerState extends State<FileScanner> {
   }
 
   Widget _getListItem(FileSystemEntity file) {
-    return GestureDetector(
-      onTap: () {
+    return FileListItem(
+      file: file,
+      choosedPath: choosePath,
+      onClicked: (file) {
         if (!file.isDirectory) {
           _chooseToggle(file.path);
           return;
         }
       },
-      onSecondaryTap: () => _showItemMenu(file),
-      onLongPress: () => _showItemMenu(file),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          decoration: BoxDecoration(
-            color: choosePath.contains(file.path)
-                ? const Color.fromARGB(96, 0, 150, 135)
-                : null,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              spacing: 5,
-              children: [
-                _getCoverWiget(file),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 5,
-                    children: [
-                      Text(
-                        file.getName(),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text('Type: ${file.isDirectory ? 'Folder' : 'File'}'),
-                      file.isFile
-                          ? Text(file.getSizeLabel())
-                          : SizedBox.shrink(),
-                      Text('Date: ${file.statSync().modified.toParseTime()}'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _getCoverWiget(FileSystemEntity file) {
-    return SizedBox(
-      width: 100,
-      height: 100,
-      child: FutureBuilder(
-        future: _getCoverPath(file),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return TLoader.random();
-          }
-          var path = '';
-          if (snapshot.hasData) {
-            path = snapshot.data ?? '';
-          }
-          return TImage(source: path);
-        },
-      ),
+      onRightClicked: _showItemMenu,
     );
   }
 
@@ -204,40 +146,6 @@ class _FileScannerState extends State<FileScanner> {
         ],
       ),
     );
-  }
-
-  Future<String> _getCoverPath(FileSystemEntity file) async {
-    if (file.isDirectory) {
-      return 'assets/folder.png';
-    }
-    final mime = lookupMimeType(file.path) ?? '';
-    if (mime.startsWith('image')) {
-      return file.path;
-    }
-    if (mime.startsWith('audio')) {
-      final cachePath = '${PathUtil.getCachePath()}/mp3.png';
-      await PathUtil.getAssetRealPathPath('mp3.png');
-      return cachePath;
-    }
-    if (mime.startsWith('video')) {
-      final cachePath =
-          '${PathUtil.getCachePath()}/${file.path.getName(withExt: false)}.png';
-      await ThanPkg.platform.genVideoThumbnail(
-        pathList: [SrcDestType(src: file.path, dest: cachePath)],
-      );
-      return cachePath;
-      // assetName = 'video.png';
-    }
-    if (mime.endsWith('/pdf')) {
-      // assetName = 'pdf.png';
-      final cachePath =
-          '${PathUtil.getCachePath()}/${file.path.getName(withExt: false)}.png';
-      await ThanPkg.platform.genPdfThumbnail(
-        pathList: [SrcDestType(src: file.path, dest: cachePath)],
-      );
-      return cachePath;
-    }
-    return '';
   }
 
   void _chooseToggle(String path) {
@@ -305,4 +213,6 @@ Path: ${file.path}
       },
     );
   }
+
+
 }

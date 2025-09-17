@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:person_server/more_libs/setting_v2.2.0/core/theme_modes_chooser.dart';
 import 'package:t_widgets/t_widgets.dart';
 import 'package:than_pkg/than_pkg.dart';
 
@@ -8,7 +9,6 @@ import 'setting.dart';
 import 'core/android_app_services.dart';
 import 'app_config.dart';
 import 'core/app_notifier.dart';
-import 'core/theme_component.dart';
 
 class AppSettingScreen extends StatefulWidget {
   const AppSettingScreen({super.key});
@@ -54,7 +54,7 @@ class _AppSettingScreenState extends State<AppSettingScreen> {
           child: Column(
             children: [
               // theme
-              ThemeComponent(),
+              ThemeModesChooser(),
               //custom path
               TListTileWithDesc(
                 title: "Config Custom Path",
@@ -63,7 +63,7 @@ class _AppSettingScreenState extends State<AppSettingScreen> {
                   value: config.isUseCustomPath,
                   onChanged: (value) {
                     setState(() {
-                      config.isUseCustomPath = value!;
+                      config.copyWith(isUseCustomPath: value);
                       isChanged = true;
                     });
                   },
@@ -91,29 +91,6 @@ class _AppSettingScreenState extends State<AppSettingScreen> {
                       ),
                     )
                   : SizedBox.shrink(),
-              //proxy server
-              // TListTileWithDesc(
-              //   title: 'Custom Proxy Server',
-              //   trailing: Switch.adaptive(
-              //     value: config.isUseProxyServer,
-              //     onChanged: (value) {
-              //       setState(() {
-              //         config.isUseProxyServer = value;
-              //         isChanged = true;
-              //       });
-              //     },
-              //   ),
-              // ),
-              // config.isUseProxyServer
-              //     ? ForwardProxyTTextField(
-              //         controller: forwardProxyController,
-              //         onChanged: (value) {
-              //           config.forwardProxyUrl = value;
-              //           isChanged = true;
-              //           setState(() {});
-              //         },
-              //       )
-              //     : SizedBox.shrink(),
             ],
           ),
         ),
@@ -142,7 +119,7 @@ class _AppSettingScreenState extends State<AppSettingScreen> {
       final oldPath = config.customPath;
 
       //set custom path
-      config.customPath = customPathTextController.text;
+      config.copyWith(customPath: customPathTextController.text);
       //save
       await config.save();
 

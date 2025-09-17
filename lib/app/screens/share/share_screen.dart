@@ -10,9 +10,8 @@ import 'package:person_server/app/models/share_file.dart';
 import 'package:person_server/app/routes_helper.dart';
 import 'package:person_server/app/services/share_services.dart';
 import 'package:person_server/more_libs/setting_v2.2.0/core/index.dart';
-import 'package:person_server/more_libs/t_server_v1.0.0/core/http_extensions.dart';
-import 'package:person_server/more_libs/t_server_v1.0.0/t_server.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:t_server/t_server.dart';
 import 'package:t_widgets/t_widgets.dart';
 import 'package:than_pkg/than_pkg.dart';
 import 'package:than_pkg/types/installed_app.dart';
@@ -55,7 +54,7 @@ class _ShareScreenState extends State<ShareScreen> {
       });
 
       TServer.instance.get('/cover', (req) async {
-        final path = req.getQueryParameters()['path'] ?? '';
+        final path = req.getQueryParameters['path'] ?? '';
         final coverPath = await _getCoverPath(path);
         req.sendFile(coverPath);
       });
